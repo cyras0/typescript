@@ -1,10 +1,19 @@
-const express = require('express');
-const http = require('http');
-const fs = require('fs');
-const WebSocket = require('ws');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const { RateLimiter } = require("limiter");
+import express, { Request, Response, NextFunction } from 'express';
+import http from 'http';
+import fs from 'fs';
+import WebSocket from 'ws';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import { RateLimiter } from 'limiter';
+
+interface User {
+  username: string;
+  password: string;
+}
+
+interface FlightData {
+  states: any[];
+}
 
 const app = express();
 const port = 4000;
@@ -17,9 +26,9 @@ app.use(express.static('public'));
 app.use(bodyParser.json());
 
 const whitelist = ['http://localhost:3000'];
-const corsOptions = {
+const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
+    if (whitelist.indexOf(origin as string) !== -1 || !origin) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -31,11 +40,11 @@ app.use(cors(corsOptions));
 
 const apiLimiter = new RateLimiter({ tokensPerInterval: 10, interval: 'second' });
 
-const users = [{ username: 'admin', password: 'admin' }];
+const users: User[] = [{ username: 'admin', password: 'admin' }];
 
 let isAuthenticated = false;
 
-const authenticate = (req, res, next) => {
+const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   if (isAuthenticated) {
     next();
   } else {
@@ -43,7 +52,7 @@ const authenticate = (req, res, next) => {
   }
 };
 
-app.post('/login', (req, res) => {
+app.post('/login', (req: Request, res: Response): void => {
   const { username, password } = req.body;
   const user = users.find((u) => u.username === username && u.password === password);
   if (user) {
@@ -57,9 +66,9 @@ app.post('/login', (req, res) => {
 
 let counter = 0;
 
-let broadcastInterval;
+let broadcastInterval: NodeJS.Timeout;
 
-function broadcastDataToClients() {
+function broadcastDataToClients(): void {
   const fileName = `data${counter}.json`;
   const filePath = `./uploads/${fileName}`;
 
@@ -79,31 +88,31 @@ function broadcastDataToClients() {
 
     counter++;
   } else {
-    console.log(`File ${fileName} not found. Broadcasting stopped.`);
-    clearInterval(broadcastInterval);
+    console.log(`Reached end of data files. Restarting from data0.json`);
+    counter = 0; // Reset counter to start from the beginning
   }
 }
 
 broadcastInterval = setInterval(broadcastDataToClients, 3000);
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws: WebSocket): void => {
   console.log('WebSocket client connected');
 
-  ws.on('message', (message) => {
+  ws.on('message', (message: WebSocket.Data): void => {
     console.log(`Received message: ${message}`);
   });
 
-  ws.on('close', () => {
+  ws.on('close', (): void => {
     console.log('WebSocket client disconnected');
   });
 });
 
 const v1Router = express.Router();
-v1Router.get('/opensky-local', authenticate, async (req, res) => {
+v1Router.get('/opensky-local', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     await apiLimiter.removeTokens(1);
     if (req.query.fileId) {
-      let jsonFile = req.query.fileId;
+      const jsonFile = req.query.fileId as string;
       console.log(jsonFile);
       const filePath = `./uploads/${jsonFile}.json`;
 
@@ -131,18 +140,18 @@ v1Router.get('/opensky-local', authenticate, async (req, res) => {
 });
 
 const v2Router = express.Router();
-v2Router.get('/opensky-local', authenticate, async (req, res) => {
+v2Router.get('/opensky-local', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
     await apiLimiter.removeTokens(1);
     if (req.query.fileId) {
-      let jsonFile = req.query.fileId;
+      const jsonFile = req.query.fileId as string;
       console.log(jsonFile);
       const filePath = `./uploads/${jsonFile}.json`;
 
       if (fs.existsSync(filePath)) {
         try {
           const dataFromFile = fs.readFileSync(filePath, 'utf-8');
-          const jsonData = JSON.parse(dataFromFile);
+          const jsonData = JSON.parse(dataFromFile) as FlightData;
 
           const totalStates = jsonData.states.length;
 
@@ -170,4 +179,4 @@ app.use('/v2', v2Router);
 
 server.listen(port, () => {
   console.log(`Server is listening at http://localhost:${port}`);
-});
+}); 

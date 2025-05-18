@@ -1,6 +1,6 @@
 # React Flight Map App
 
-This React.js application is designed to display real-time flight data on an interactive map. It offers a customizable configuration through environment variables and provides options to retrieve flight data either via traditional HTTP requests or WebSocket.
+This React Typescript application is designed to display real-time flight data on an interactive map. It offers a customizable configuration through environment variables and provides options to retrieve flight data either via traditional HTTP requests or WebSocket.
 
 ## Table of Contents
 
