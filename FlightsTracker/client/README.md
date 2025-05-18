@@ -1,68 +1,54 @@
-# React Flight Map App
+# React + TypeScript + Vite
 
-This React Typescript application is designed to display real-time flight data on an interactive map. It offers a customizable configuration through environment variables and provides options to retrieve flight data either via traditional HTTP requests or WebSocket.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Table of Contents
+Currently, two official plugins are available:
 
-1. [Application Overview](#1-application-overview)
-2. [Environment Variables](#2-environment-variables)
-3. [Source Code Structure](#3-source-code-structure)
-4. [Map Component](#4-map-component)
-5. [Data Fetching](#5-data-fetching)
-6. [WebSocket Integration](#6-websocket-integration)
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
-## 1. Application Overview
+## Expanding the ESLint configuration
 
-The React.js application is built to provide a dynamic and interactive map that visualizes live flight data. Users can tailor the behavior of the application based on their requirements, including the choice of data retrieval method. The core component of the application is the map, which forms the basis of the user interface.
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
 
-## 2. Environment Variables
+```js
+export default tseslint.config({
+  extends: [
+    // Remove ...tseslint.configs.recommended and replace with this
+    ...tseslint.configs.recommendedTypeChecked,
+    // Alternatively, use this for stricter rules
+    ...tseslint.configs.strictTypeChecked,
+    // Optionally, add this for stylistic rules
+    ...tseslint.configs.stylisticTypeChecked,
+  ],
+  languageOptions: {
+    // other options...
+    parserOptions: {
+      project: ['./tsconfig.node.json', './tsconfig.app.json'],
+      tsconfigRootDir: import.meta.dirname,
+    },
+  },
+})
+```
 
-To configure the application's behavior, you can use environment variables. In the root directory, there's a `.env` file containing the following variables:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-- `REACT_APP_API_KEY`: This environment variable is used to specify the API key required for map styling. It is a mandatory configuration.
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-- `REACT_APP_WS`: This environment variable can be set to either `'true'` or `'false'` to enable or disable WebSocket functionality. It influences the way the application obtains flight data.
-
-## 3. Source Code Structure
-
-The application's source code is organized as follows:
-
-- `src/`: This is the root directory of the source code.
-
-  - `index.js`: The application's entry point, responsible for initializing the React application.
-
-  - `index.css`: The primary CSS file for the application.
-
-  - `App.js`: The central component that renders the application's user interface, including the map component.
-
-  - `components/`: This directory holds various components utilized by the application.
-
-    - `map.js`: The central component that handles the map rendering, displays flight data markers, and manages user interactions.
-
-    - `map.css`: CSS styles specific to the map component.
-
-## 4. Map Component
-
-The `Map` component is the main component of the application, delivering the interactive map and facilitating the presentation of flight data.
-
-- The component utilizes the [MapLibre GL](https://www.mapbox.com/maplibre-gl/) library to create interactive maps.
-
-- Functions like `createCustomMarker`, `getMarkerColor`, and `displayMarkers` are responsible for customizing marker styling and rendering flight data.
-
-- The component manages user interactions, allowing left-click and right-click actions on map markers.
-
-## 5. Data Fetching
-
-The application fetches flight data using either traditional HTTP requests or WebSocket, depending on the `REACT_APP_WS` environment variable.
-
-- When `REACT_APP_WS` is set to `'false'`, the application uses HTTP requests to fetch flight data from a local server at `http://localhost:4000/opensky-local`.
-
-- When `REACT_APP_WS` is set to `'true'`, the application establishes a WebSocket connection to receive real-time flight data from `ws://localhost:4000`.
-
-## 6. WebSocket Integration
-
-If WebSocket integration is enabled (by setting `REACT_APP_WS` to `'true'`), the application initiates a WebSocket connection with the server.
-
-- Real-time flight data is received and displayed on the map as it becomes available.
-
-- The WebSocket connection is established, and event handlers are configured to manage data reception and connection status.
+export default tseslint.config({
+  plugins: {
+    // Add the react-x and react-dom plugins
+    'react-x': reactX,
+    'react-dom': reactDom,
+  },
+  rules: {
+    // other rules...
+    // Enable its recommended typescript rules
+    ...reactX.configs['recommended-typescript'].rules,
+    ...reactDom.configs.recommended.rules,
+  },
+})
+```
