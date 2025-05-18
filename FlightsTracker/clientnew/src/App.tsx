@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import './App.css'
 
 interface Flight {
@@ -30,6 +32,27 @@ function App() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<string>('Disconnected');
   const [retryCount, setRetryCount] = useState(0);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [map, setMap] = useState<maplibregl.Map | null>(null);
+  const [markers, setMarkers] = useState<maplibregl.Marker[]>([]);
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const newMap = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=YOUR_MAPTILER_KEY',
+      center: [3, 37],
+      zoom: 5
+    });
+
+    newMap.addControl(new maplibregl.NavigationControl(), 'top-right');
+    setMap(newMap);
+
+    return () => {
+      newMap.remove();
+    };
+  }, []);
 
   useEffect(() => {
     let ws: WebSocket | null = null;
@@ -42,15 +65,14 @@ function App() {
         ws.onopen = () => {
           console.log('WebSocket Connected');
           setConnectionStatus('Connected');
-          setRetryCount(0); // Reset retry count on successful connection
+          setRetryCount(0);
         };
 
         ws.onmessage = (event) => {
           try {
             const data: FlightData = JSON.parse(event.data);
-            console.log('Received flight data:', data);
             if (data.states) {
-              // Convert array format to object format
+              // Convert array format to object format and filter valid flights
               const validFlights = data.states
                 .filter(state => state && state.length >= 17)
                 .map(state => ({
@@ -76,7 +98,12 @@ function App() {
                   flight.latitude != null && 
                   flight.longitude != null && 
                   !isNaN(flight.latitude) && 
-                  !isNaN(flight.longitude)
+                  !isNaN(flight.longitude) &&
+                  flight.latitude >= -90 && 
+                  flight.latitude <= 90 &&
+                  flight.longitude >= -180 && 
+                  flight.longitude <= 180 &&
+                  !flight.on_ground
                 );
               setFlights(validFlights);
             }
@@ -88,7 +115,6 @@ function App() {
         ws.onclose = () => {
           console.log('WebSocket Disconnected');
           setConnectionStatus('Disconnected');
-          // Exponential backoff for reconnection
           const timeout = Math.min(1000 * Math.pow(2, retryCount), 10000);
           setRetryCount(prev => prev + 1);
           reconnectTimeout = setTimeout(connect, timeout);
@@ -99,7 +125,6 @@ function App() {
         };
       } catch (error) {
         console.error('Error creating WebSocket:', error);
-        // Retry on error
         const timeout = Math.min(1000 * Math.pow(2, retryCount), 10000);
         setRetryCount(prev => prev + 1);
         reconnectTimeout = setTimeout(connect, timeout);
@@ -118,39 +143,72 @@ function App() {
     };
   }, []);
 
+  const createCustomMarker = (color: string, rotation: number, flight: Flight) => {
+    const customMarkerContainer = document.createElement('div');
+    customMarkerContainer.className = 'custom-marker-container';
+
+    const customMarker = document.createElement('div');
+    customMarker.className = 'custom-marker';
+    customMarker.style.fontSize = '40px';
+    customMarker.style.color = color;
+    customMarker.textContent = '✈';
+    customMarker.style.transform = `rotate(${rotation}deg)`;
+
+    customMarkerContainer.appendChild(customMarker);
+    return customMarkerContainer;
+  };
+
+  const getMarkerColor = (altitude: number) => {
+    if (altitude < 1000) return 'white';
+    if (altitude < 2000) return '#ff1300';
+    if (altitude < 3000) return 'orange';
+    if (altitude < 5000) return '#ffcf01';
+    return '#4aff00';
+  };
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Clear existing markers
+    markers.forEach(marker => marker.remove());
+    const newMarkers: maplibregl.Marker[] = [];
+
+    flights.forEach(flight => {
+      const color = getMarkerColor(flight.baro_altitude || 0);
+      const el = createCustomMarker(color, flight.heading + 270, flight);
+      
+      const marker = new maplibregl.Marker({
+        element: el,
+        rotationAlignment: 'map'
+      })
+        .setLngLat([flight.longitude, flight.latitude])
+        .setPopup(new maplibregl.Popup({ offset: 25 })
+          .setHTML(`
+            <p><b>ICAO24:</b> ${flight.icao24}</p>
+            <p><b>Callsign:</b> ${flight.callsign}</p>
+            <p><b>Country:</b> ${flight.origin_country}</p>
+            <p><b>Altitude:</b> ${flight.baro_altitude?.toFixed(0) || 'N/A'} ft</p>
+            <p><b>Speed:</b> ${flight.velocity?.toFixed(0) || 'N/A'} m/s</p>
+          `))
+        .addTo(map);
+
+      newMarkers.push(marker);
+    });
+
+    setMarkers(newMarkers);
+  }, [flights, map]);
+
   return (
-    <div className="app-container">
-      <div className="map-container">
-        {/* Map will be implemented here */}
-        <div className="flights-overlay">
-          {flights.map((flight) => (
-            <div
-              key={`${flight.icao24}-${flight.time_position}`}
-              className="airplane"
-              style={{
-                left: `${(flight.longitude + 180) * (100 / 360)}%`,
-                top: `${(90 - flight.latitude) * (100 / 180)}%`,
-                transform: `rotate(${flight.heading}deg)`
-              }}
-            >
-              ✈️
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ 
-        position: 'fixed', 
-        top: 10, 
-        right: 10, 
-        background: 'rgba(0,0,0,0.7)', 
-        color: 'white', 
-        padding: '5px 10px',
-        borderRadius: '4px'
-      }}>
+    <div className="map-wrap">
+      <a href="https://www.maptiler.com" className="watermark">
+        <img src="https://api.maptiler.com/resources/logo.svg" alt="MapTiler logo" />
+      </a>
+      <div ref={mapContainerRef} className="map" />
+      <div className="status-indicator">
         Status: {connectionStatus} | Flights: {flights.length}
       </div>
     </div>
-  )
+  );
 }
 
 export default App
