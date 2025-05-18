@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/maplibre-gl": "^1.13.2",
     "maplibre-gl": "^5.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

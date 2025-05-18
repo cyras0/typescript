@@ -29,6 +29,10 @@ interface FlightData {
 }
 
 function App() {
+  if (!import.meta.env.VITE_MAPTILER_KEY) {
+    throw new Error("VITE_MAPTILER_KEY environment variable is not set. Please create a .env file with your MapTiler API key.");
+  }
+
   const [flights, setFlights] = useState<Flight[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<string>('Disconnected');
   const [retryCount, setRetryCount] = useState(0);
@@ -41,13 +45,17 @@ function App() {
 
     const newMap = new maplibregl.Map({
       container: mapContainerRef.current,
-      style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=YOUR_MAPTILER_KEY',
+      style: `https://api.maptiler.com/maps/basic-v2-dark/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`,
       center: [3, 37],
       zoom: 5
     });
 
     newMap.addControl(new maplibregl.NavigationControl(), 'top-right');
     setMap(newMap);
+
+    newMap.on('load', () => {
+      setMap(newMap);
+    });
 
     return () => {
       newMap.remove();
