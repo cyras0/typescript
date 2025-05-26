@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import 'leaflet/dist/leaflet.css' // Alternative map library
 import './App.css'
 
 interface Flight {

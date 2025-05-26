@@ -174,6 +174,8 @@ v2Router.get('/opensky-local', authenticate, async (req: Request, res: Response)
   }
 });
 
+// v1 router handles legacy API endpoints for backwards compatibility
+// v2 router contains newer optimized endpoints with improved error handling and rate limiting
 app.use('/v1', v1Router);
 app.use('/v2', v2Router);
 
