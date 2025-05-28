@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Providers from "./providers";
+import Navbar from "./components/Navbar";
 
 const workSans = localFont({
   src: [
@@ -61,8 +62,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${workSans.variable} antialiased`}>
-        <Providers>{children}</Providers>
+      <body className={`${workSans.variable} font-work-sans antialiased`}>
+        <Providers>
+          <Navbar />
+          <main>
+            {children}
+          </main>
+        </Providers>
       </body>
     </html>
   );
