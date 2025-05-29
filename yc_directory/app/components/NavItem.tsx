@@ -10,11 +10,13 @@ interface NavItemProps {
 }
 
 const NavItem = ({ href, onClick, children, type = 'link' }: NavItemProps) => {
+  const commonClasses = "text-white font-medium px-4 py-2 rounded-md transition-colors duration-200 hover:bg-gray-800";
+
   if (type === 'button') {
     return (
       <button 
         onClick={onClick}
-        className="nav-item"
+        className={commonClasses}
       >
         {children}
       </button>
@@ -24,7 +26,7 @@ const NavItem = ({ href, onClick, children, type = 'link' }: NavItemProps) => {
   return (
     <Link 
       href={href || '#'}
-      className="nav-item"
+      className={commonClasses}
     >
       {children}
     </Link>

@@ -6,13 +6,13 @@ const Navbar = async () => {
   const session = await auth();
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
-      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="sticky top-0 z-50 w-full bg-black">
+      <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
         <NavItem href="/">
           <Image src="/logo.png" alt="logo" width={144} height={30} />
         </NavItem>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-6">
           {session && session?.user ? (
             <>
               <NavItem href="/startup/create">
