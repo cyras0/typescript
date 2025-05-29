@@ -1,9 +1,7 @@
 import React from 'react'
 import Form from 'next/form'
-import SearchFormReset from './SearchFormReset';
 
 const SearchForm = ({query}: {query?: string}) => {
-    
     return (
         <div style={{
             width: '100%',
@@ -45,24 +43,18 @@ const SearchForm = ({query}: {query?: string}) => {
                         SEARCH
                     </button>
 
-                    {query && (
-                        <button type="button" style={{
-                            padding: '12px',
-                            backgroundColor: 'red',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            fontSize: '16px',
-                            cursor: 'pointer'
-                        }}>
-                            X
-                        </button>
-                    )}
+                    <button type="button" style={{
+                        padding: '12px',
+                        backgroundColor: 'red',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '16px',
+                        cursor: 'pointer'
+                    }}>
+                        X
+                    </button>
                 </Form>
-                
-                <p style={{marginTop: '10px', color: 'green'}}>
-                    Query: "{query || 'none'}"
-                </p>
             </div>
         </div>
     )
