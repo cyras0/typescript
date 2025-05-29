@@ -1,10 +1,9 @@
 import Image from "next/image";
-import { getServerSession } from "next-auth";
-import { signOut, signIn } from "@/auth";
+import { auth, signOut, signIn } from "@/auth";
 import NavItem from "./NavItem";
 
 const Navbar = async () => {
-  const session = await getServerSession();
+  const session = await auth();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">

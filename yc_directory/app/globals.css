@@ -1,5 +1,4 @@
-@import "tailwindcss/preflight";
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   * {
@@ -10,15 +9,23 @@
   }
 }
 
-@layer components {
-  .nav-item {
-    @apply inline-block px-4 py-2 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200;
+@utility nav-item {
+  display: inline-block;
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: white;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: all 0.2s;
+  
+  &:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   }
 }
 
 @custom-variant dark (&:is(.dark *));
 
-@theme inline {
+@theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -125,412 +132,613 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer utilities {
-    .flex-between {
-        @apply flex justify-between items-center;
-    }
-
-    .text-30-extrabold {
-    @apply text-[30px] font-extrabold;
-  }
-
-  .pink_container {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_2 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_3 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_4 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_5 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_6 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_7 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_8 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_9 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_10 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_11 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_12 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_13 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_14 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_15 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_16 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_17 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_18 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_19 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_20 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_21 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_22 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_23 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_24 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_25 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_26 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_27 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_28 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_29 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_30 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_31 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_32 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_33 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_34 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_35 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_36 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_37 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_38 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_39 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_40 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_41 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_42 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_43 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_44 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_45 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_46 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_47 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_48 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_49 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_50 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_51 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_52 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_53 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_54 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_55 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_56 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_57 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_58 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_59 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_60 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_61 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_62 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_63 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_64 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_65 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_66 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_67 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_68 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_69 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_70 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_71 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_72 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_73 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_74 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_75 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_76 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_77 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_78 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_79 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_80 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_81 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_82 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_83 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_84 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_85 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_86 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_87 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_88 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_89 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_90 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_91 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_92 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_93 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_94 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_95 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_96 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_97 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_98 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_99 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
-
-  .pink_container_100 {
-    @apply bg-[#FFE5E5] rounded-[20px] p-5;
-  }
+@utility flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@utility text-30-extrabold {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+@utility pink_container {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_2 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_3 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_4 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_5 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_6 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_7 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_8 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_9 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_10 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_11 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_12 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_13 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_14 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_15 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_16 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_17 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_18 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_19 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_20 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_21 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_22 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_23 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_24 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_25 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_26 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_27 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_28 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_29 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_30 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_31 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_32 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_33 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_34 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_35 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_36 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_37 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_38 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_39 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_40 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_41 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_42 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_43 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_44 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_45 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_46 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_47 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_48 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_49 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_50 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_51 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_52 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_53 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_54 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_55 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_56 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_57 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_58 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_59 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_60 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_61 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_62 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_63 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_64 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_65 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_66 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_67 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_68 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_69 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_70 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_71 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_72 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_73 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_74 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_75 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_76 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_77 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_78 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_79 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_80 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_81 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_82 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_83 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_84 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_85 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_86 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_87 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_88 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_89 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_90 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_91 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_92 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_93 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_94 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_95 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_96 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_97 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_98 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_99 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
+}
+
+@utility pink_container_100 {
+  background-color: #FFE5E5;
+  border-radius: 20px;
+  padding: 1.25rem;
 }
