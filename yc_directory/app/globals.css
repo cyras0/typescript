@@ -1,4 +1,20 @@
-@import "tailwindcss";
+@import "tailwindcss/preflight";
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground min-h-screen;
+  }
+}
+
+@layer components {
+  .nav-item {
+    @apply inline-block px-4 py-2 rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-200;
+  }
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -109,11 +125,412 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
+@layer utilities {
+    .flex-between {
+        @apply flex justify-between items-center;
+    }
+
+    .text-30-extrabold {
+    @apply text-[30px] font-extrabold;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .pink_container {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_2 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_3 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_4 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_5 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_6 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_7 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_8 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_9 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_10 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_11 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_12 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_13 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_14 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_15 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_16 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_17 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_18 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_19 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_20 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_21 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_22 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_23 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_24 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_25 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_26 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_27 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_28 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_29 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_30 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_31 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_32 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_33 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_34 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_35 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_36 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_37 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_38 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_39 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_40 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_41 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_42 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_43 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_44 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_45 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_46 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_47 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_48 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_49 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_50 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_51 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_52 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_53 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_54 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_55 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_56 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_57 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_58 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_59 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_60 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_61 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_62 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_63 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_64 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_65 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_66 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_67 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_68 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_69 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_70 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_71 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_72 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_73 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_74 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_75 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_76 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_77 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_78 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_79 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_80 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_81 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_82 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_83 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_84 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_85 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_86 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_87 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_88 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_89 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_90 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_91 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_92 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_93 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_94 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_95 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_96 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_97 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_98 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_99 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
+  }
+
+  .pink_container_100 {
+    @apply bg-[#FFE5E5] rounded-[20px] p-5;
   }
 }

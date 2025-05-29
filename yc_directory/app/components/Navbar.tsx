@@ -1,23 +1,24 @@
-import Link from "next/link";
 import Image from "next/image";
-import { auth, signOut, signIn } from "@/auth";
+import { getServerSession } from "next-auth";
+import { signOut, signIn } from "@/auth";
+import NavItem from "./NavItem";
 
 const Navbar = async () => {
-  const session = await auth();
+  const session = await getServerSession();
 
   return (
-    <header className="px-5 py-3 bg-white shadow-sm font-work-sans">
-      <nav className="flex justify-between items-center">
-        <Link href="/">
+    <header className="sticky top-0 z-50 w-full bg-white border-b border-gray-200">
+      <nav className="container mx-auto px-4 py-3 flex justify-between items-center">
+        <NavItem href="/">
           <Image src="/logo.png" alt="logo" width={144} height={30} />
-        </Link>
+        </NavItem>
 
-        <div className="flex items-center gap-5 text-black">
+        <div className="flex items-center gap-4">
           {session && session?.user ? (
             <>
-              <Link href="/startup/create">
-                <span>Create Startup</span>         
-              </Link>
+              <NavItem href="/startup/create">
+                Create Startup
+              </NavItem>
 
               <form
                 action={async () => {
@@ -25,12 +26,14 @@ const Navbar = async () => {
                   await signOut({ redirectTo: "/" });
                 }}
               >
-                <button type="submit">Sign Out</button>
+                <NavItem type="button">
+                  Sign Out
+                </NavItem>
               </form>
 
-              <Link href={`/user/${session.user.id}`}>
-                <span>{session.user.name}</span>
-              </Link>
+              <NavItem href={`/user/${session.user.name}`}>
+                {session.user.name}
+              </NavItem>
             </>
           ) : (
             <form
@@ -39,7 +42,9 @@ const Navbar = async () => {
                 await signIn("github");
               }}
             >
-              <button type="submit">Login</button>
+              <NavItem type="button">
+                Login
+              </NavItem>
             </form>
           )}
         </div>
