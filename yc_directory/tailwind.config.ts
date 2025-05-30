@@ -11,9 +11,11 @@ const config: Config = {
     extend: {
       colors: {
         'test-purple': '#800080',
+        'section-pink': '#FFE5E5',
+        'section-black': '#000000',
       },
       fontFamily: {
-        'work-sans': ['var(--font-work-sans)', 'sans-serif'],
+        'work-sans': ['var(--font-work-sans)'],
       },
     },
   },
