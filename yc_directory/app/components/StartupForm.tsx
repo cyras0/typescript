@@ -2,11 +2,16 @@
 
 import React, {useState} from "react";
 import {Input} from "@/components/ui/input";
+import MDEditor from '@uiw/react-md-editor';
+import { Button } from "./ui/button";
+import { Send } from "lucide-react";
 
 const StartupForm = () => {
   const [error, setError] = useState<Record<string, string>>({});
 
-
+  const [pitch, setPitch] = useState("**Hello world!!!**");
+  const isPending = false;
+ 
   return (
     <form action={() => {}} className="startup-form">
       <div>
@@ -65,6 +70,31 @@ const StartupForm = () => {
 
         {error.link && <p className="startup-form-error">{error.link}</p>}
       </div>
+      <div data-color-mode="light">
+        <label htmlFor="pitch" className="startup-form-label">
+          Pitch
+        </label>
+        <MDEditor
+           value={pitch}
+           onChange={(value) => setPitch(value as string)}
+           id="pitch"
+           preview="edit"
+           height={300}
+           style={{ borderRadius: 20, overflow: "hidden" }}
+           textareaProps={{
+            placeholder: "Breiefly describe your idea and what problem it solves...",
+           }}
+           previewOptions={{
+            disallowedElements: ["style"],
+           }}
+        />
+        {error.pitch && <p className="startup-form-error">{error.pitch}</p>}
+      </div>
+
+      <Button type="submit" className="startup-form_btn" disabled={isPending}>
+         {isPending ? "Submitting..." : "Submit your pitch"}
+         <Send className="size-6 ml-2" />
+      </Button>
     </form>
   )
 }
