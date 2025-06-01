@@ -43,10 +43,12 @@ export default async function Home({
       </section>
 
       {/* Bottom Section */}
-      <section className="flex-1 bg-[#000000] py-16">
+      <section className="bottom-section">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#FFFFFF]">All Startups</h2>
-          <ul className="mt-7 card_grid">
+          <div className="startups-header">
+            <h2>All Startups</h2>
+          </div>
+          <ul className="card_grid">
             {posts?.length > 0 ? (
               posts.map((post) => (
                 <StartupCard key={post._id} post={post} />
