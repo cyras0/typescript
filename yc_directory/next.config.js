@@ -1,6 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // config options here
+  images: {
+    dangerouslyAllowSVG: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'i.ibb.co',
+      }
+    ],
+  },
 };
 
 module.exports = nextConfig; 

@@ -1,31 +1,17 @@
-import SearchForm from "@/components/SearchForm";
-import StartupCard, { StartupTypeCard } from "@/components/StartupCard";
-
 import { client } from "../../sanity/lib/client";
 import { STARTUPS_QUERY } from "../../sanity/lib/queries";
+import StartupCard from "../components/StartupCard";
+import SearchForm from "../components/SearchForm";
 
 export default async function Home({
-  searchParams}: {
-    searchParams: Promise<{ query?: string}>
+  searchParams,
+}: {
+  searchParams: { query?: string };
 }) {
-   const query = (await searchParams).query;
-
-   const posts = await client.fetch(STARTUPS_QUERY, {
-    search: query || "",
-   });
-
-   console.log(JSON.stringify(posts, null, 2));
-
-  //  const posts = [{
-  //   _createdAt: new Date().toISOString(),
-  //   views: 55,
-  //   author: {_id: 1, name: 'Gator'},
-  //   _id: "1",
-  //   description: 'this is a description.', 
-  //   category: 'Robots',
-  //   title: "We Robots",
-  //   image: "https://via.placeholder.com/150", //https://unsplash.com/photos/-0hKZ-WT1Tk
-  //  }]
+  const query = searchParams.query || "";
+  const posts = await client.fetch(STARTUPS_QUERY, {
+    search: query,
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -50,7 +36,7 @@ export default async function Home({
             
             {/* Search box */}
             <div>
-              <SearchForm />
+              <SearchForm query={query} />
             </div>
           </div>
         </div>
@@ -62,11 +48,11 @@ export default async function Home({
           <h2 className="text-3xl font-bold text-center mb-12 text-[#FFFFFF]">All Startups</h2>
           <ul className="mt-7 card_grid">
             {posts?.length > 0 ? (
-              posts.map((post: StartupTypeCard) => (
-                <StartupCard key={post?._id} post={post} />
+              posts.map((post) => (
+                <StartupCard key={post._id} post={post} />
               ))
             ) : (
-              <p className="no-results">No startups found</p>
+              <p className="no-results text-white">No startups found</p>
             )}
           </ul>
         </div>
