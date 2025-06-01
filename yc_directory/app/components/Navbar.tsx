@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { auth, signOut, signIn } from "@/auth";
+import { auth, signOut, signIn } from "../auth";
 import NavItem from "./NavItem";
 
 const Navbar = async () => {

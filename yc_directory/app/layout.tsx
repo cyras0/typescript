@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import 'easymde/dist/easymde.min.css'
+
 import Providers from "./providers";
 import Navbar from "./components/Navbar";
 
