@@ -9,6 +9,9 @@ import { Eye } from "lucide-react"
 export type StartupTypeCard = Omit<Startup, "author"> & { author?: Author };
 
 const StartupCard = ({ post }: { post: StartupTypeCard }) => {
+  // Add console logs to inspect the data
+  console.log('Full post data:', post);
+  console.log('Author data:', post.author);
     
   const {
     _createdAt, 
@@ -20,6 +23,9 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
     image,
   } = post;
  const {_id: authorId, name}  = author || {}
+
+  // Add another console log to see the extracted author data
+  console.log('Extracted author data:', { authorId, name });
 
   return (
     <li className="startup-card group">

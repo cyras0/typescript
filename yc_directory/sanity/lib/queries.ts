@@ -1,6 +1,19 @@
 import { defineQuery } from "next-sanity";
 
-export const STARTUPS_QUERY = `*[_type == "startup"]`;
+export const STARTUPS_QUERY = `*[_type == "startup"]{
+  _id,
+  title,
+  _createdAt,
+  author -> {
+    _id,
+    name,
+    image
+  },
+  views,
+  description,
+  category,
+  image
+}`;
 
 export const STARTUP_BY_ID_QUERY =
   defineQuery(`*[_type == "startup" && _id == $id][0]{

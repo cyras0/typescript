@@ -770,22 +770,22 @@
 /* Startup Card Grid */
 .card_grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(600px, 1fr));
   gap: 2rem;
   padding: 1rem;
-  background: transparent; /* Ensure grid background is transparent */
+  background: transparent;
 }
 
 /* Startup Card */
 .startup-card {
   background: var(--card);
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: 2rem;
   transition: all 0.3s ease;
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .startup-card:hover {
@@ -824,7 +824,7 @@
 /* Card Image */
 .startup-card_img {
   width: 100%;
-  height: 140px;
+  height: 280px;
   object-fit: cover;
   border-radius: var(--radius);
   margin: 0.5rem 0;
@@ -881,10 +881,10 @@
   }
   
   .startup-card {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .startup-card_img {
-    height: 120px;
+    height: 240px;
   }
 }
