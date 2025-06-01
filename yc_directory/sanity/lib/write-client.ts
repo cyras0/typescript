@@ -1,10 +1,15 @@
+import "server-only"
 import { createClient } from 'next-sanity'
-import { apiVersion, dataset, projectId } from '../env'
+import { apiVersion, dataset, projectId, token } from '../env'
 
 export const writeClient = createClient({
   projectId,
   dataset,
   apiVersion,
-  token: process.env.SANITY_API_TOKEN, // You'll need to add this to your .env file
+  token,
   useCdn: false, // Always false for write operations
-})
+});
+
+if (!writeClient.config().token) {
+  throw new Error('Write token not found');
+}
