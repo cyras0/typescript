@@ -39,6 +39,7 @@
     "sanity": "^3.90.0",
     "sanity-plugin-markdown": "^5.1.0",
     "server-only": "^0.0.1",
+    "sonner": "^2.0.4",
     "styled-components": "^6.1.18",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
