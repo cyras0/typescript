@@ -1,3 +1,5 @@
+"use client"
+
 import React from 'react'
 import { formatDate } from '../../lib/utils'
 import Link from 'next/link'
@@ -27,6 +29,10 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
   // Add another console log to see the extracted author data
   console.log('Extracted author data:', { authorId, name });
 
+  // Add debugging
+  console.log('Post _id:', _id);
+  console.log('Details URL will be:', `/startup/${_id}`);
+
   return (
     <li className="startup-card group">
         <div className="flex-between">
@@ -38,46 +44,45 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
                 <span className="text-16-medium">{views}</span>
             </div>
         </div>
+        
         <div className="flex-between mt-5 gap-5">
             <div className="flex-1">
                 <Link href={`/user/${authorId}`}>
-                 <p className="text-16-medium line-clamp-1">{name}</p>
+                    <p className="text-16-medium line-clamp-1">{name}</p>
                 </Link>
                 <Link href={`/startup/${_id}`}>
                     <h3 className="text-26-semibold line-clamp-1">{title}</h3>
                 </Link>
-                <Link href={`/user/${authorId}`}>
-                    <Image 
-                      src="/images/avatars/default-avatar.png"
-                      alt={name || 'Author'} 
-                      width={24} 
-                      height={24} 
-                      className="rounded-full" 
-                    />
-                </Link>
             </div>
 
-            <Link href={`/startup/${_id}`}>
-                <p className="startup-card_desc">
-                    {description}
-                </p>
-
-                <img src={image} alt="placeholder" className="startup-card_img" />
+            <Link href={`/user/${authorId}`}>
+                <Image 
+                  src="/images/avatars/default-avatar.png"
+                  alt={name || 'Author'} 
+                  width={24} 
+                  height={24} 
+                  className="rounded-full" 
+                />
             </Link>
-
-            <div className="flex-center gap-23 mt-5">
-                <Link href={`/?query=${category?.toLowerCase() ?? ''}`}>
-                    <p className="text-16-medium line-clamp-1">{category}</p>
-                </Link>
-                <Button className="startup-card_btn" asChild>
-                    <Link href={`/startup/${_id}`}>Details</Link>
-                
-                </Button>
-            </div>
         </div>
 
+        <Link href={`/startup/${_id}`}>
+            <p className="startup-card_desc">
+                {description}
+            </p>
+            <img src={image} alt="placeholder" className="startup-card_img" />
+        </Link>
+
+        <div className="flex-between mt-5">
+            <Link href={`/?query=${category?.toLowerCase() ?? ''}`}>
+                <p className="text-16-medium">{category}</p>
+            </Link>
+            
+            <Button className="startup-card_btn" asChild>
+                <Link href={`/startup/${_id}`}>Details</Link>
+            </Button>
+        </div>
     </li>
-    
   )
 }
 
