@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { auth, signOut, signIn } from "../auth";
+import { auth, signOut, signIn } from "@/auth";
 import NavItem from "./NavItem";
 
 const Navbar = async () => {
@@ -30,7 +30,7 @@ const Navbar = async () => {
                 </NavItem>
               </form>
 
-              <NavItem href={`/user/${session.user.name}`}>
+              <NavItem href={`/user/${session.id}`}>
                 {session.user.name}
               </NavItem>
             </>
