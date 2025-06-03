@@ -20,39 +20,54 @@ const StartupForm = () => {
   const router = useRouter();
   
   const handleFormSubmit = async (previousState: any, formData: FormData) => {
+    console.log("=== FORM SUBMIT STARTED ===");
+    
     try {
+      // Debug: Log all form data
+      console.log("Raw FormData entries:");
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+      
       const formValues = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         category: formData.get("category") as string,
         link: formData.get("link") as string,
-        pitch: formData.get("pitch") as string,
+        pitch: pitch, // Use state value instead of formData.get("pitch")
       }
       
+      console.log("Form values to validate:", formValues);
+      console.log("Pitch state value:", pitch);
+      
+      // Add validation debugging
+      console.log("Starting validation...");
       await formSchema.parseAsync(formValues);
-      console.log(formValues);
-     
-      console.log("createPitch starts  ");  
-      console.log(pitch);
-
+      console.log("Validation passed!");
+      
+      console.log("createPitch starts");
       const result = await createPitch(previousState, formData, pitch)
 
       if(result.status == "SUCCESS") {
         toast.success("Success", {
           description: "Your pitch has been created successfully",
         });
-        console.log("createPitch success  ");  
+        console.log("createPitch success");
+        router.push(`/startup/${result._id}`);
       } else {
         toast.error("Error", {
           description: "Something went wrong",
         });
-        console.log("createPitch error  ");  
-        console.log(result);
+        console.log("createPitch error:", result);
       }
-      router.push(`/startup/${result._id}`);
+      
       return result
 
     } catch (error) {
+      console.log("=== ERROR CAUGHT ===");
+      console.log("Error type:", error.constructor.name);
+      console.log("Error:", error);
+      
       if(error instanceof z.ZodError) {
         const fieldErrors = error.flatten().fieldErrors;
         setError(fieldErrors as unknown as Record<string, string>);
@@ -60,8 +75,8 @@ const StartupForm = () => {
         toast.error("Validation failed", {
           description: "Please check your inputs and try again",
         });
-        console.log("validation failed  ");  
-        console.log(fieldErrors);
+        console.log("Zod validation failed");
+        console.log("Field errors:", fieldErrors);
 
         return {... previousState, error: 'Validation failed', status: "ERROR"};
       }
@@ -69,11 +84,10 @@ const StartupForm = () => {
       toast.error("Error", {
         description: "Something went wrong",
       });
+      console.log("Non-validation error");
 
       return {... previousState, error: 'Something went wrong', status: "ERROR"};
-    } 
-
-    return {error: {}, status: "SUCCESS"};
+    }
   }
 
   
@@ -84,6 +98,8 @@ const StartupForm = () => {
   
   return (
     <form action={formAction} className="startup-form">
+      <input type="hidden" name="pitch" value={pitch} />
+      
       <div>
         <label htmlFor="title" className="startup-form-label">
           Title
