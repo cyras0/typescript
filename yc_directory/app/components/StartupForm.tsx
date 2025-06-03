@@ -20,14 +20,14 @@ const StartupForm = () => {
   const router = useRouter();
   
   const handleFormSubmit = async (previousState: any, formData: FormData) => {
-    console.log("=== FORM SUBMIT STARTED ===");
+    // console.log("=== FORM SUBMIT STARTED ===");
     
     try {
       // Debug: Log all form data
-      console.log("Raw FormData entries:");
-      for (let [key, value] of formData.entries()) {
-        console.log(`${key}:`, value);
-      }
+      // console.log("Raw FormData entries:");
+      // for (let [key, value] of formData.entries()) {
+      //   console.log(`${key}:`, value);
+      // }
       
       const formValues = {
         title: formData.get("title") as string,
@@ -37,22 +37,22 @@ const StartupForm = () => {
         pitch: pitch, // Use state value instead of formData.get("pitch")
       }
       
-      console.log("Form values to validate:", formValues);
-      console.log("Pitch state value:", pitch);
+      // console.log("Form values to validate:", formValues);
+      // console.log("Pitch state value:", pitch);
       
       // Add validation debugging
-      console.log("Starting validation...");
+      // console.log("Starting validation...");
       await formSchema.parseAsync(formValues);
-      console.log("Validation passed!");
+      // console.log("Validation passed!");
       
-      console.log("createPitch starts");
+      // console.log("createPitch starts");
       const result = await createPitch(previousState, formData, pitch)
 
       if(result.status == "SUCCESS") {
         toast.success("Success", {
           description: "Your pitch has been created successfully",
         });
-        console.log("createPitch success");
+        // console.log("createPitch success");
         router.push(`/startup/${result._id}`);
       } else {
         toast.error("Error", {
