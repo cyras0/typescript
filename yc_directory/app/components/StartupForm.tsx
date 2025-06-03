@@ -1,96 +1,76 @@
 "use client"
 
-import React, {useActionState, useState} from "react";
+import React, {useActionState, useState, useEffect} from "react";
 import {Input} from "@/components/ui/input";
 import MDEditor from '@uiw/react-md-editor';
 import { Button } from "./ui/button";
-import { Router, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { formSchema } from "@/lib/validation";
-import { useFormState } from "react-dom";
 import { z } from "zod";
-import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { createPitch } from "@/lib/actions";
 
 const StartupForm = () => {
   const [error, setError] = useState<Record<string, string>>({});
-
   const [pitch, setPitch] = useState("");
-
   const router = useRouter();
-  
-  const handleFormSubmit = async (previousState: any, formData: FormData) => {
-    // console.log("=== FORM SUBMIT STARTED ===");
+
+  useEffect(() => {
+    // ✅ Test toast with better styling
+    const showToast = async () => {
+      const { toast } = await import("sonner");
+      toast.success("🎉 Welcome to Create Startup!", {
+        description: "Fill out the form below to submit your pitch",
+        duration: 5000,
+        style: {
+          background: '#10B981',
+          color: 'white',
+          border: '2px solid #059669',
+          fontSize: '16px',
+        },
+        position: 'top-center', // Try different position
+      });
+    };
     
+    setTimeout(showToast, 500);
+  }, []);
+
+  const handleFormSubmit = async (previousState: any, formData: FormData) => {
     try {
-      // Debug: Log all form data
-      // console.log("Raw FormData entries:");
-      // for (let [key, value] of formData.entries()) {
-      //   console.log(`${key}:`, value);
-      // }
-      
       const formValues = {
         title: formData.get("title") as string,
         description: formData.get("description") as string,
         category: formData.get("category") as string,
         link: formData.get("link") as string,
-        pitch: pitch, // Use state value instead of formData.get("pitch")
+        pitch: pitch,
       }
       
-      // console.log("Form values to validate:", formValues);
-      // console.log("Pitch state value:", pitch);
-      
-      // Add validation debugging
-      // console.log("Starting validation...");
       await formSchema.parseAsync(formValues);
-      // console.log("Validation passed!");
-      
-      // console.log("createPitch starts");
       const result = await createPitch(previousState, formData, pitch)
 
       if(result.status == "SUCCESS") {
-        toast.success("Success", {
-          description: "Your pitch has been created successfully",
-        });
-        // console.log("createPitch success");
+        // Remove toast for now
+        console.log("Success!");
         router.push(`/startup/${result._id}`);
       } else {
-        toast.error("Error", {
-          description: "Something went wrong",
-        });
-        console.log("createPitch error:", result);
+        console.log("Error:", result);
       }
       
       return result
 
     } catch (error) {
-      console.log("=== ERROR CAUGHT ===");
-      console.log("Error type:", error.constructor.name);
-      console.log("Error:", error);
+      console.log("=== ERROR CAUGHT ===", error);
       
       if(error instanceof z.ZodError) {
         const fieldErrors = error.flatten().fieldErrors;
         setError(fieldErrors as unknown as Record<string, string>);
-
-        toast.error("Validation failed", {
-          description: "Please check your inputs and try again",
-        });
-        console.log("Zod validation failed");
-        console.log("Field errors:", fieldErrors);
-
         return {... previousState, error: 'Validation failed', status: "ERROR"};
       }
       
-      toast.error("Error", {
-        description: "Something went wrong",
-      });
-      console.log("Non-validation error");
-
       return {... previousState, error: 'Something went wrong', status: "ERROR"};
     }
   }
 
-  
   const [state, formAction, isPending] = useActionState(handleFormSubmit, {
     error: "",
     status: "INITIAL",
