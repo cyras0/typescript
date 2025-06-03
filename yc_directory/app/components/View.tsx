@@ -20,7 +20,7 @@ async function incrementViews(id: string, currentViews: number) {
 const View = async ({ id }: { id: string }) => {
   try {
     const { views: totalViews } = await client
-      .withConfig({ useCdn: false })
+      .withConfig({ useCdn: true })
       .fetch(STARTUP_VIEWS_QUERY, { id });
 
     // Call the server action to update views

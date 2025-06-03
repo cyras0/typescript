@@ -21,8 +21,8 @@ const Page = async ({params}: {params: Promise<{id: string}>}) => {
   const id = (await params).id;
 
   const [post, playlist] = await Promise.all([
-    client.fetch(STARTUP_BY_ID_QUERY, { id }),
-    client.fetch(PLAYLIST_BY_SLUG_QUERY, {
+    client.withConfig({ useCdn: true }).fetch(STARTUP_BY_ID_QUERY, { id }),
+    client.withConfig({ useCdn: true }).fetch(PLAYLIST_BY_SLUG_QUERY, {
       slug: "editor-picks",
     }),
   ]);

@@ -27,11 +27,7 @@ const StartupCard = ({ post }: { post: StartupTypeCard }) => {
   } = post;
  const {_id: authorId, name}  = author || {}
 
-  // Add another console log to see the extracted author data
-  console.log('Extracted author data:', { authorId, name });
-
   // Add debugging
-  console.log('Post _id:', _id);
   console.log('Details URL will be:', `/startup/${_id}`);
 
   return (

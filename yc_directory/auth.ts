@@ -35,7 +35,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
 
     async jwt({ token, account, profile }) {
-      if (account && profile) {
+      if (account && profile && !token.id) {
         const user = await client.withConfig({ useCdn: false }).fetch(AUTHOR_BY_GITHUB_ID_QUERY, { id: profile?.id });
         token.id = user?._id;
       }
@@ -54,5 +54,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   
   secret: process.env.NEXTAUTH_SECRET,
   
-  debug: process.env.NODE_ENV === "development",
+  debug: false,
 });
