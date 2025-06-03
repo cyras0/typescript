@@ -5,6 +5,7 @@ import 'easymde/dist/easymde.min.css'
 
 import Providers from "./providers";
 import Navbar from "./components/Navbar";
+import { Toaster } from "./components/ui/sonner";
 
 const workSans = localFont({
   src: [
@@ -69,6 +70,7 @@ export default function RootLayout({
           <Navbar />
           <main className="min-h-[calc(100vh-4rem)]">
             {children}
+            <Toaster />
           </main>
         </Providers>
       </body>
