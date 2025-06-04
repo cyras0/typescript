@@ -82,6 +82,8 @@
 
 @layer components {
   .wrapper {
+    /* This is a Tailwind CSS class that sets a maximum width of 1440 pixels
+       using Tailwind's arbitrary value syntax with square brackets */
     @apply max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8;
   }
 
@@ -669,5 +671,9 @@
         @apply text-sm font-semibold text-dark-100 capitalize;
       }
     }
+  }
+
+  .rotate-180-custom {
+    transform: rotate(180deg);
   }
 }

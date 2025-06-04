@@ -1,33 +1,15 @@
-import type { Metadata } from "next";
-import { Karla } from "next/font/google";
-import "./globals.css";
-import { satoshi } from "../fonts/font";
+import { ReactNode } from "react";
+import Navbar from "./components/Navbar";
 
-const geistKarla = Karla({
-  variable: "--font-geist-karla",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "SnapCast",
-  description: "A Screen Sharing App",
-  icons: {
-    icon: "/assets/icons/logo.svg",
-  },
-};
-
-export default function Layout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+const Layout = ({ children }: { children: ReactNode }) => {
   return (
     <html lang="en">
-      <body
-        className={`${geistKarla.variable} ${satoshi.variable} font-karla antialiased`}
-      >
+      <body>
+        <Navbar />
         {children}
       </body>
     </html>
   );
-}
+};
+
+export default Layout;
