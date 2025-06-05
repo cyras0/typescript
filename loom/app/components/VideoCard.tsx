@@ -23,7 +23,7 @@ const VideoCard = ({
         <article>
             <div>
                 <figure>
-                    <Image src={userImg} alt="avatar" width={34} height={34} className="rounded-full aspect-square object-cover" />
+                    <Image src={userImg || "/assets/images/dummy.jpg" } alt="avatar" width={34} height={34} className="rounded-full aspect-square object-cover" />
                     <figcaption>
                         <h3>{username}</h3>
                         <p>{visibility}</p>

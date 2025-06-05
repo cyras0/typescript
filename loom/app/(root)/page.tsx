@@ -8,11 +8,11 @@ const Page = () => {
   return (
     <main className='wrapper page'>
       <Header title="All Videos" subHeader="Public Library"/>
-      <h1 className="text-2xl font-karla">Welcome to LOOM!</h1>
-      {dummyCards.map((card) => (
-        <VideoCard key={card.id} {...card} />
-      ))}
-      
+        <section className="video-grid">
+          {dummyCards.map((card) => (
+            <VideoCard key={card.id} {...card} />
+        ))}         
+        </section>
     </main>
   )
 }
