@@ -10,20 +10,22 @@ const VideoCard = ({
     thumbnail,
     createdAt,
     userImg,
-    userName,
+    username,
     views,
     visibility,
     duration,
 }: VideoCardProps) => {
   return (
    <Link href={`/video/${id}`} className="video-card">
-        <Image src={thumbnail} alt={thumbnail} width={290} height={160} className="thumbnail" />
+        <div className="relative aspect-video w-full rounded-t-2xl overflow-hidden">
+            <Image src={thumbnail} alt={thumbnail} fill className="object-cover" sizes="(max-width: 768px) 100vw, 290px" />
+        </div>
         <article>
             <div>
                 <figure>
                     <Image src={userImg} alt="avatar" width={34} height={34} className="rounded-full aspect-square object-cover" />
                     <figcaption>
-                        <h3>{userName}</h3>
+                        <h3>{username}</h3>
                         <p>{visibility}</p>
                     </figcaption>
                 </figure>
@@ -45,6 +47,13 @@ const VideoCard = ({
         <button onClick={() => {}} className="copy-btn">
             <Image src="/assets/icons/link.svg" alt="copy" width={18} height={18} />
         </button>
+        {duration && (
+            <div className="duration">
+                {Math.ceil(duration / 60)}min
+                <Image src="/assets/icons/clock.svg" alt="duration" width={16} height={16} />
+                <span>{duration}</span>
+            </div>
+        )}
    </Link>
   )
 }
