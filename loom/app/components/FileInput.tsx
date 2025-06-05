@@ -1,8 +1,38 @@
-import React from 'react'
+import React from 'react';
+import Image from 'next/image';
 
-const FileInput = () => {
+const FileInput = ({id, label, accept, file, previewUrl, inputRef, onChange, onReset, type}: FileInputProps) => {
   return (
-    <div>FileInput</div>
+    <section className='file-input'>
+        <label htmlFor={id}>{label}</label>
+        <input 
+            type="file"
+            id={id}
+            accept={accept}
+            ref={inputRef}
+            hidden // This hides the native file input element, while the items above (type, id, accept, ref) are standard input props that remain active
+            onChange={onChange}
+        />
+
+        {!previewUrl ? (
+            <figure onClick={() => inputRef.current?.click()}>
+                <Image src="/assets/icons/upload.svg" alt="Upload" width={24} height={24} />
+                <p>Click to upload your {id}</p>
+            </figure>
+        ): (
+            <div>
+                {type == 'video' ? (
+                    <video src={previewUrl} controls />
+                ) : (
+                    <Image src={previewUrl} alt="image" fill />
+                )}
+                <button type="button" onClick={onReset}>
+                    <Image src="/assets/icons/close.svg" alt="close" width={16} height={16} />
+                </button>
+                <p>{file?.name}</p>
+            </div>
+        )}
+    </section>
   )
 }
 
