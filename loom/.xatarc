@@ -1,0 +1,6 @@
+{
+  "databaseURL": "https://cyras0-s-workspace-r01me4.us-west-2.xata.sh/db/snapcast",
+  "codegen": {
+    "output": "src/xata.ts"
+  }
+}
