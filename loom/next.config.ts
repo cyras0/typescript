@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  productionBrowserSourceMaps: false,
+  turbopack: {
+    rules: {
+      // Disable source maps in development
+      '*.{js,jsx,ts,tsx}': {
+        sourceMap: false,
+      },
+    },
+  },
 };
 
 export default nextConfig;

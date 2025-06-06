@@ -50,7 +50,7 @@ const VideoCard = ({
         {duration && (
             <div className="duration">
                 {Math.ceil(duration / 60)}min
-                <Image src="/assets/icons/clock.svg" alt="duration" width={16} height={16} />
+                <Image src="/assets/icons/checkmark.svg" alt="duration" width={16} height={16} />
                 <span>{duration}</span>
             </div>
         )}

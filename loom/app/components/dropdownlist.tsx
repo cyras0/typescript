@@ -14,7 +14,7 @@ const DropdownList = () => {
                     <Image src="/assets/icons/hamburger.svg" alt="menu" width={14} height={14} />
                     Most recent
                 </figure>
-                <Image src="/assets/icons/arrow-down.svg" alt="arrow-down" width={20} height={2} />
+                <Image src="/assets/icons/arrow-down.svg" alt="arrow-down" width={20} height={20} />
             </div>            
         </div>
         {isOpen && (

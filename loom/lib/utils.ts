@@ -29,6 +29,7 @@ export const updateURLParams = (
 
 // Get env helper function
 export const getEnv = (key: string): string => {
+  console.log('Getting env:', key, process.env[key]);
   const value = process.env[key];
   if (!value) throw new Error(`Missing required env: ${key}`);
   return value;
