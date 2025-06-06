@@ -42,7 +42,7 @@ export const useFileInput = (maxSize: number) => {
             URL.revokeObjectURL(previewUrl);
         }
         setFile(null);
-        setPreviewUrl(null);
+        setPreviewUrl('');
         setDuration(0);
         if(inputRef.current) {
             inputRef.current.value = '';
