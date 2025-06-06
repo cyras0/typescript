@@ -5,12 +5,11 @@ import FileInput from '@/app/components/FileInput'
 import React, { useEffect, useState } from 'react'
 import { MAX_THUMBNAIL_SIZE, MAX_VIDEO_SIZE } from '@/constants'
 import { useFileInput } from '@/lib/hooks/useFileInput'
-import { getThumbnailUploadUrl } from '@/lib/actions/video'
-import { getVideoUploadUrl, saveVideoDetailsToDb } from '@/lib/actions/server-actions'
-
+import { getVideoUploadUrl, saveVideoDetailsToDb, getThumbnailUploadUrl } from '@/lib/actions/video'
 
 import {getVideoDuration} from "@/lib/utils";
 import { useRouter } from 'next/navigation';
+
 
 const upLoadFileToBunny = async (file: File, uploadUrl: string, accessKey: string): Promise<void> => {
     const response = await fetch(uploadUrl, {
