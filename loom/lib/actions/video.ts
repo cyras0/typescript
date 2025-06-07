@@ -5,6 +5,8 @@ import { BUNNY } from "@/constants";
 import { db } from "@/drizzle/db";
 import { videos } from "@/drizzle/schema";
 
+// Add this import at the top of the file
+import { auth } from "@/lib/auth";
 
 const VIDEO_STREAM_BASE_URL = `${BUNNY.STREAM_BASE_URL}/videos`;
 const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
@@ -12,6 +14,26 @@ const ACCESS_KEYS = {
     streamAccessKey: getEnv("BUNNY_STREAM_ACCESS_KEY"),
     storageAccessKey: getEnv("BUNNY_STORAGE_ACCESS_KEY"),
 }
+
+const validateWithArcjet = async (fingerprint: string) => {
+    const rateLimit = aj.withRules({
+        fixedWindow: {
+            mode: 'LIVE',
+            window: '1m',
+            max: 2,
+            charactristcs: ['fingerprint'],
+        },
+    })
+    const req = await request()
+    const decision = await rateLimit.protect(req, {fingerprint})
+    if(decision.isDenied) {
+        throw new Error('Rate limit exceeded')
+    }
+
+}
+
+
+// Server Actions
 
 // In lib/actions/server-actions.ts
 export async function getVideoUploadUrl() {
