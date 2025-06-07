@@ -1,12 +1,12 @@
 'use server'
 
-import { apiFetch, getEnv } from "@/lib/utils";
+import { apiFetch, getEnv, withErrorHandling } from "@/lib/utils";
 import { BUNNY } from "@/constants";
 import { db } from "@/drizzle/db";
 import { videos } from "@/drizzle/schema";
-
-// Add this import at the top of the file
+import { headers } from 'next/headers';
 import { auth } from "@/lib/auth";
+import { eq } from 'drizzle-orm';
 
 const VIDEO_STREAM_BASE_URL = `${BUNNY.STREAM_BASE_URL}/videos`;
 const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
@@ -32,12 +32,44 @@ const validateWithArcjet = async (fingerprint: string) => {
 
 }
 
+const getSessionUserId = async (): Promise<string> => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) throw new Error("Unauthenticated");
+  return session.user.id;
+};
 
 // Server Actions
 
-// In lib/actions/server-actions.ts
-export async function getVideoUploadUrl() {
+// Create a new server action that handles getting the headers internally
+export const getVideoUploadUrl = withErrorHandling(async () => {
+  await getSessionUserId(); // This will throw if not authenticated
+  
+  const videoResponse = await apiFetch<BunnyVideoResponse>(
+    `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+    {
+      method: 'POST',
+      bunnyType: 'stream',
+      body: { title: 'Temporary Title', collectionId: '' },
+    }
+  );
+
+  const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+  return {
+    videoId: videoResponse.guid,
+    uploadUrl,
+    AccessKey: ACCESS_KEYS.streamAccessKey,
+  };
+});
+
+// Keep the original function for internal use
+async function getVideoUploadUrlOld(headers: Headers) {
     try {
+        const session = await auth.api.getSession({ headers });
+        
+        if (!session?.user?.id) {
+            throw new Error('User must be authenticated to upload videos');
+        }
+
         const videoResponse = await apiFetch<BunnyVideoResponse>(
             `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
             {
@@ -60,58 +92,52 @@ export async function getVideoUploadUrl() {
     }
 }
 
-export async function getThumbnailUploadUrl(videoId: string) {
-    try {
-        const fileName = `${Date.now()}-${videoId}-thumbnail`;
-        const uploadUrl = `${BUNNY.STORAGE_BASE_URL}/thumbnails/${fileName}`;
-        const cdnUrl = `${BUNNY.CDN_URL}/thumbnails/${fileName}`;
+export const getThumbnailUploadUrl = withErrorHandling(async (videoId: string) => {
+  await getSessionUserId(); // This will throw if not authenticated
+  
+  const fileName = `${Date.now()}-${videoId}-thumbnail`;
+  const uploadUrl = `${BUNNY.STORAGE_BASE_URL}/thumbnails/${fileName}`;
+  const cdnUrl = `${BUNNY.CDN_URL}/thumbnails/${fileName}`;
 
-        return {
-            uploadUrl,
-            cdnUrl,
-            AccessKey: ACCESS_KEYS.storageAccessKey,
-        };
-    } catch (error) {
-        console.error('Error in getThumbnailUploadUrl:', error);
-        throw error;
-    }
-}
+  return {
+    uploadUrl,
+    cdnUrl,
+    AccessKey: ACCESS_KEYS.storageAccessKey,
+  };
+});
 
-export async function saveVideoDetailsToDb(videoDetails: VideoDetails) {
-    const session = await auth();
-    
-    if (!session?.user?.id) {
-        throw new Error('User must be authenticated to upload videos');
-    }
+export const saveVideoDetailsToDb = withErrorHandling(async (videoDetails: VideoDetails) => {
+  const userId = await getSessionUserId();
+  
+  // First, check if user exists
+  const existingUser = await db.query.user.findFirst({
+    where: eq(user.id, userId)
+  });
 
-    // First, check if user exists
-    const existingUser = await db.query.user.findFirst({
-        where: eq(user.id, session.user.id)
+  // If user doesn't exist, create them
+  if (!existingUser) {
+    await db.insert(user).values({
+      id: userId,
+      name: session.user.name || 'Anonymous',
+      email: session.user.email || `${userId}@placeholder.com`,
+      emailVerified: false,
+      image: session.user.image,
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
+  }
 
-    // If user doesn't exist, create them
-    if (!existingUser) {
-        await db.insert(user).values({
-            id: session.user.id,
-            name: session.user.name || 'Anonymous',
-            email: session.user.email || `${session.user.id}@placeholder.com`,
-            emailVerified: false,
-            image: session.user.image,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
-    }
+  // Now insert the video
+  await db.insert(videos).values({
+    title: videoDetails.title,
+    description: videoDetails.description,
+    videoId: videoDetails.videoId,
+    thumbnailUrl: videoDetails.thumbnailUrl,
+    visibility: videoDetails.visibility as "public" | "private",
+    videoUrl: `${BUNNY.EMBED_URL}//${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
+    userId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+});
 
-    // Now insert the video
-    await db.insert(videos).values({
-        title: videoDetails.title,
-        description: videoDetails.description,
-        videoId: videoDetails.videoId,
-        thumbnailUrl: videoDetails.thumbnailUrl,
-        visibility: videoDetails.visibility as "public" | "private",
-        videoUrl: `${BUNNY.EMBED_URL}//${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
-        userId: session.user.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    });
-}

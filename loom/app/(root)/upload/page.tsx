@@ -5,7 +5,7 @@ import FileInput from '@/app/components/FileInput'
 import React, { useEffect, useState } from 'react'
 import { MAX_THUMBNAIL_SIZE, MAX_VIDEO_SIZE } from '@/constants'
 import { useFileInput } from '@/lib/hooks/useFileInput'
-import { getVideoUploadUrl, saveVideoDetailsToDb, getThumbnailUploadUrl } from '@/lib/actions/video'
+import { getVideoUploadUrl, saveVideoDetailsToDb, getThumbnailUploadUrl, getVideoUploadUrlWithAuth } from '@/lib/actions/video'
 
 import {getVideoDuration} from "@/lib/utils";
 import { useRouter } from 'next/navigation';
@@ -79,7 +79,6 @@ const Page = () => {
                 return;
             }
 
-            console.log('Calling getVideoUploadUrl...');
             const result = await getVideoUploadUrl();
             console.log('Raw result from getVideoUploadUrl:', result);
             console.log('Result type:', typeof result);
