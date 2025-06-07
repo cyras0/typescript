@@ -3,10 +3,11 @@
 import { apiFetch, getEnv, withErrorHandling } from "@/lib/utils";
 import { BUNNY } from "@/constants";
 import { db } from "@/drizzle/db";
-import { videos } from "@/drizzle/schema";
+import { user, videos } from "@/drizzle/schema";
 import { headers } from 'next/headers';
 import { auth } from "@/lib/auth";
-import { eq } from 'drizzle-orm';
+import { count, eq } from 'drizzle-orm';
+import { revalidatePath } from "next/cache";
 
 const VIDEO_STREAM_BASE_URL = `${BUNNY.STREAM_BASE_URL}/videos`;
 const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
@@ -38,6 +39,22 @@ const getSessionUserId = async (): Promise<string> => {
   return session.user.id;
 };
 
+
+const revalidatePaths = (paths: string[]) => {
+    paths.forEach((path) => revalidatePath(path));
+  };
+  
+
+const buildVideoWithUserQuery = () =>
+    db
+      .select({
+        video: videos,
+        user: { id: user.id, name: user.name, image: user.image },
+      })
+      .from(videos)
+      .leftJoin(user, eq(videos.userId, user.id));
+
+      
 // Server Actions
 
 // Create a new server action that handles getting the headers internally
@@ -141,3 +158,54 @@ export const saveVideoDetailsToDb = withErrorHandling(async (videoDetails: Video
   });
 });
 
+export const getAllVideos = withErrorHandling(async (
+    searchQuery: string = '',
+    sortFilter?: string,
+    pageNumber: number = 1,
+    pageSize: number = 8,
+) => {
+    const session = await auth.api.getSession({ headers: await headers() })
+    const currentUserId = session?.user?.id;
+
+    const canSeeTheVideos = or(
+        eq(videos.visibility, 'public'),
+        eq(videos.userId, currentUserId!)
+    );
+
+    const whereCondition  = searchQuery.trim()
+       ? and(
+        canSeeTheVideos,
+        doesTitleMatch(videos, searchQuery),
+       ): canSeeTheVideos
+
+    
+
+    const [{ totalCount}] = await db
+    .select({totalCount: sql<number>`count(*)`})
+    .from(videos)
+    .where(whereCondition)
+
+    const totalVideos = Number(totalCount || 0);
+    const totalPages = Math.ceil(totalVideos / pageSize);
+
+    // Fetch paginated, sorted results
+    const videoRecords = await buildVideoWithUserQuery()
+      .where(whereCondition)
+      .orderBy(
+        sortFilter
+          ? getOrderByClause(sortFilter)
+          : sql`${videos.createdAt} DESC`
+      )
+      .limit(pageSize)
+      .offset((pageNumber - 1) * pageSize);
+      return {
+        videos: videoRecords,
+        pagination: {
+          currentPage: pageNumber,
+          totalPages,
+          totalVideos,
+          pageSize,
+        },
+      };
+    }
+  );

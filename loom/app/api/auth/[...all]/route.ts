@@ -4,7 +4,7 @@ import aj, {
     slidingWindow,
     validateEmail,
   } from "@/lib/arcjet";
-
+import ip from "@arcjet/ip";
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest } from "next/server";
@@ -14,6 +14,12 @@ const emailValidation = aj.withRule(
 
 const rateLimit = aj.withRule(
     slidingWindow({mode: 'LIVE', interval: '2m', max: 2, characteristics: ['fingerprint']}))
+
+const shieldValidation = aj.withRule(
+    shield({
+        mode: 'LIVE',
+    })
+)
 
 const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
     const session = await auth.api.getSession({headers: req.headers})
@@ -53,7 +59,7 @@ export const POST = async (req: NextRequest) => {
             throw new Error('Rate limit exceeded')
         }
         if(decision.reason.isShield()) {
-            throw new Error('Shield turned on, protected against malicious actions')
+            throw new Error('Shield validation failed')
         }
         
     }
