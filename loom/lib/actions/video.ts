@@ -10,6 +10,7 @@ import { eq, and, ilike, desc, sql, or } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
 import { cookies } from 'next/headers';
+import { getUserId } from '@/lib/session';
 
 
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
@@ -94,45 +95,11 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
-    // Get the session cookie directly
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
-    
-    console.log('Session cookie:', sessionCookie);
-    
-    if (!sessionCookie?.value) {
+    const userId = await getUserId();
+    if (!userId) {
       return "Unauthenticated";
     }
 
-    let session;
-    try {
-      session = JSON.parse(sessionCookie.value);
-      console.log('Parsed session:', session);
-    } catch (error) {
-      console.error('Error parsing session cookie:', error);
-      return "Invalid session format";
-    }
-
-    // Get userId from the nested user object
-    const userId = session?.user?.id;
-    if (!userId) {
-      console.log('Session missing userId:', session);
-      return "Invalid session data";
-    }
-
-    // Verify user exists in database
-    const existingUsers = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, userId))
-      .limit(1);
-
-    console.log('Existing users:', existingUsers);
-
-    if (existingUsers.length === 0) {
-      return "User not found in database";
-    }
-  
     const videoResponse = await apiFetch<BunnyVideoResponse>(
       `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
       {
