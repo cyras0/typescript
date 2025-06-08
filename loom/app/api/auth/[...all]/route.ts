@@ -7,7 +7,19 @@ import aj, {
 import ip from "@arcjet/ip";
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+
+// Add CORS headers helper
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // In production, replace with your specific domain
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
 const emailValidation = aj.withRule(
     validateEmail({mode: 'LIVE', block: ['DISPOSABLE', 'INVALID', 'NO_MX_RECORDS']}))
@@ -27,7 +39,6 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
     
     if(session?.user?.id) {
        userId = session.user.id;
-
     } else {
         userId = ip(req) || '127.0.0.1'
     }
@@ -47,7 +58,7 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
       return shieldValidation.protect(req);
 }
 
-const authHandlers  = toNextJsHandler(auth.handler);
+const authHandlers = toNextJsHandler(auth.handler);
 
 export const POST = async (req: NextRequest) => {
     const decision = await protectedAuth(req)
@@ -61,11 +72,14 @@ export const POST = async (req: NextRequest) => {
         if(decision.reason.isShield()) {
             throw new Error('Shield validation failed')
         }
-        
     }
-    return authHandlers.POST(req)
+    const response = await authHandlers.POST(req);
+    // Add CORS headers to the response
+    return NextResponse.json(await response.json(), { headers: corsHeaders });
 }
 
-
-
-export const {GET} = authHandlers; 
+export const GET = async (req: NextRequest) => {
+    const response = await authHandlers.GET(req);
+    // Add CORS headers to the response
+    return NextResponse.json(await response.json(), { headers: corsHeaders });
+} 
