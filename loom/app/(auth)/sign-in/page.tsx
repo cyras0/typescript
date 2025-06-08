@@ -3,20 +3,36 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { authClient } from '@/lib/auth-client'
 
 const Page = () => {
   const [email, setEmail] = useState('')
+  const [showEmailInput, setShowEmailInput] = useState(false)
   const router = useRouter()
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleGoogleSignIn = async () => {
+    try {
+      console.log('Starting Google sign in...');
+      const response = await authClient.signIn.social({
+        provider: "google",
+      });
+      console.log('Sign in response:', response);
+      return response;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
+  };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      // Store the email in localStorage or sessionStorage
+      // Store the email in localStorage
       localStorage.setItem('userEmail', email)
       // Redirect to home page
       router.push('/')
     } catch (error) {
-      console.error('Sign in error:', error)
+      console.error('Email sign in error:', error)
     }
   }
 
@@ -49,22 +65,50 @@ const Page = () => {
             <h1>SnapCast</h1>
           </Link>
           <p>Create and share your very first <span>SnapCast video</span> in no time!</p>
-          <form onSubmit={handleSignIn} className="flex flex-col gap-4 w-full max-w-sm">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-            <button 
-              type="submit"
-              className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
-            >
-              <span>Continue with Email</span>
-            </button>
-          </form>
+          
+          {!showEmailInput ? (
+            <div className="flex flex-col gap-4 w-full max-w-sm">
+              <button 
+                onClick={handleGoogleSignIn}
+                className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
+              >
+                <Image src="/assets/icons/google.svg" alt="google" width={22} height={22} />
+                <span>Sign in with Google</span>
+              </button>
+              <button 
+                onClick={() => setShowEmailInput(true)}
+                className="w-full flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
+              >
+                <span>Continue with Email</span>
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleEmailSignIn} className="flex flex-col gap-4 w-full max-w-sm">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <div className="flex gap-2">
+                <button 
+                  type="submit"
+                  className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
+                >
+                  <span>Continue</span>
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setShowEmailInput(false)}
+                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-200 transition-colors"
+                >
+                  <span>Back</span>
+                </button>
+              </div>
+            </form>
+          )}
         </section>
       </aside>
       <div className='overlay'/>
