@@ -42,11 +42,12 @@ const Page = () => {
         throw new Error('Failed to sign in');
       }
 
-      const { user, session } = await response.json();
+      const data = await response.json();
+      console.log('Sign in response:', data);
       
       // Store session in localStorage
-      localStorage.setItem('mockSession', JSON.stringify({ user, session }));
-      console.log('Session stored:', { user, session });
+      localStorage.setItem('mockSession', JSON.stringify(data));
+      console.log('Session stored:', data);
       
       // Navigate to home page
       window.location.href = '/';

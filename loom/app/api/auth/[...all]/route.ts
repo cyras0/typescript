@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
         const body = await req.clone().json();
         if (body.email) {
             try {
+                console.log('Processing email sign-in for:', body.email);
+                
                 // First check if user already exists
                 const existingUsers = await db
                     .select()
@@ -88,6 +90,7 @@ export async function POST(req: NextRequest) {
                 let finalUserId;
                 if (existingUsers.length > 0) {
                     finalUserId = existingUsers[0].id;
+                    console.log('Found existing user:', finalUserId);
                 } else {
                     // Create new user
                     finalUserId = uuidv4();
@@ -101,6 +104,7 @@ export async function POST(req: NextRequest) {
                         createdAt: now,
                         updatedAt: now,
                     });
+                    console.log('Created new user:', finalUserId);
                 }
 
                 // Create a session
@@ -117,6 +121,7 @@ export async function POST(req: NextRequest) {
                     createdAt: now,
                     updatedAt: now,
                 });
+                console.log('Created session:', sessionId);
 
                 // Get the user details
                 const [userDetails] = await db
@@ -130,13 +135,21 @@ export async function POST(req: NextRequest) {
                     id: sessionId,
                     userId: finalUserId,
                     expiresAt: expiresAt.toISOString(),
-                    token: token
+                    token: token,
+                    user: {
+                        id: userDetails.id,
+                        name: userDetails.name,
+                        email: userDetails.email,
+                        image: userDetails.image
+                    }
                 };
+
+                console.log('Created session object:', session);
 
                 // Set the session cookie with a simpler format
                 const sessionCookie = `session=${JSON.stringify(session)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
                 
-                return NextResponse.json({ 
+                const response = NextResponse.json({ 
                     user: userDetails,
                     session: session
                 }, { 
@@ -145,6 +158,9 @@ export async function POST(req: NextRequest) {
                         'Set-Cookie': sessionCookie
                     }
                 });
+
+                console.log('Sending response with cookie');
+                return response;
             } catch (error) {
                 console.error('Error in email sign-in:', error);
                 return NextResponse.json(

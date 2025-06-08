@@ -6,7 +6,7 @@ import { db } from "@/drizzle/db";
 import { user, videos } from "@/drizzle/schema";
 import { headers } from 'next/headers';
 import { auth } from "@/lib/auth";
-import { eq, and, ilike, desc, sql } from 'drizzle-orm';
+import { eq, and, ilike, desc, sql, or } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
 import { cookies } from 'next/headers';
@@ -98,6 +98,8 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     const cookieStore = cookies();
     const sessionCookie = cookieStore.get('session');
     
+    console.log('Session cookie:', sessionCookie);
+    
     if (!sessionCookie?.value) {
       return "Unauthenticated";
     }
@@ -105,12 +107,14 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     let session;
     try {
       session = JSON.parse(sessionCookie.value);
+      console.log('Parsed session:', session);
     } catch (error) {
       console.error('Error parsing session cookie:', error);
       return "Invalid session format";
     }
 
     if (!session?.userId) {
+      console.log('Session missing userId:', session);
       return "Invalid session data";
     }
 
@@ -120,6 +124,8 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
       .from(user)
       .where(eq(user.id, session.userId))
       .limit(1);
+
+    console.log('Existing users:', existingUsers);
 
     if (existingUsers.length === 0) {
       return "User not found in database";
@@ -247,63 +253,66 @@ export const getAllVideos = async (
   page: number = 1,
   limit: number = 12
 ) => {
-  console.log('=== getAllVideos START ===');
-  
-  const currentUserId = (
-    await auth.api.getSession({ headers: await headers() })
-  )?.user.id;
-
-  // Get all public videos
-  const conditions = [
-    eq(videos.visibility, "public"),
-    searchQuery.trim() && ilike(videos.title, `%${searchQuery}%`),
-  ].filter(Boolean) as any[];
-
-  // Get videos from database
-  const allVideos = await buildVideoWithUserQuery()
-    .where(and(...conditions))
-    .orderBy(
-      sortFilter ? getOrderByClause(sortFilter) : desc(videos.createdAt)
-    );
-
-  // Filter out videos that don't exist in Bunny
-  const validVideos = [];
-  for (const { video, user } of allVideos) {
-    try {
-      // Check if video exists in Bunny
-      await apiFetch(
-        `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${video.videoId}`,
-        {
-          method: "GET",
-          bunnyType: "stream",
-        }
+  try {
+    const offset = (page - 1) * limit;
+    
+    // Build the base query
+    let query = buildVideoWithUserQuery();
+    
+    // Add search condition if query exists
+    if (searchQuery) {
+      query = query.where(
+        or(
+          ilike(videos.title, `%${searchQuery}%`),
+          ilike(videos.description, `%${searchQuery}%`)
+        )
       );
-      validVideos.push({ video, user });
-    } catch (error) {
-      console.log(`Video ${video.videoId} not found in Bunny, removing from database`);
-      // Remove video from database if it doesn't exist in Bunny
-      await db.delete(videos).where(eq(videos.videoId, video.videoId));
     }
+    
+    // Add visibility filter
+    query = query.where(eq(videos.visibility, 'public'));
+    
+    // Add sorting
+    if (sortFilter === 'newest') {
+      query = query.orderBy(desc(videos.createdAt));
+    } else if (sortFilter === 'oldest') {
+      query = query.orderBy(videos.createdAt);
+    } else if (sortFilter === 'views') {
+      query = query.orderBy(desc(videos.views));
+    } else {
+      // Default to newest
+      query = query.orderBy(desc(videos.createdAt));
+    }
+    
+    // Get total count for pagination
+    const countResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(videos)
+      .where(eq(videos.visibility, 'public'));
+    
+    const totalCount = Number(countResult[0].count);
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Get paginated results
+    const results = await query.limit(limit).offset(offset);
+    
+    return {
+      videos: results,
+      pagination: {
+        totalPages,
+        currentPage: page,
+      },
+    };
+  } catch (error) {
+    console.error('Error in getAllVideos:', error);
+    return {
+      videos: [],
+      pagination: {
+        totalPages: 0,
+        currentPage: page,
+      },
+    };
   }
-
-  console.log('Videos found:', {
-    total: validVideos.length,
-    currentPage: page,
-    perPage: limit
-  });
-
-  // Apply pagination
-  const paginatedVideos = validVideos.slice((page - 1) * limit, page * limit);
-
-  return {
-    videos: paginatedVideos,
-    pagination: {
-      total: validVideos.length,
-      currentPage: page,
-      totalPages: Math.ceil(validVideos.length / limit),
-      perPage: limit
-    }
-  };
 };
 
 export const getVideoById = async (videoId: string) => {
