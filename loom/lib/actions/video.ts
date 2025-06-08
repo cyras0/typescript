@@ -9,6 +9,7 @@ import { auth } from "@/lib/auth";
 import { eq, and, ilike, desc, sql } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
+import { cookies } from 'next/headers';
 
 
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
@@ -36,9 +37,25 @@ const validateWithArcjet = async (fingerprint: string) => {
 
 
 const getSessionUserId = async (): Promise<string> => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Unauthenticated");
-  return session.user.id;
+  try {
+    // First try to get real session
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (session) return session.user.id;
+  } catch (error) {
+    console.log('Real session not found, checking for mock session');
+  }
+
+  // If no real session, check for mock session
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('session');
+  if (sessionCookie) {
+    const mockSession = JSON.parse(sessionCookie.value);
+    if (mockSession?.user?.id) {
+      return mockSession.user.id;
+    }
+  }
+  
+  throw new Error("Unauthenticated");
 };
 
 
