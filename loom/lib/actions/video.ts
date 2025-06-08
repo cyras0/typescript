@@ -94,33 +94,23 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
-    // First try to get real session
-    const session = await auth.api.getSession({ headers: await headers() });
-    let userId;
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('session');
     
-    if (session?.user?.id) {
-      userId = session.user.id;
-    } else {
-      // If no real session, check for mock session
-      const cookieStore = cookies();
-      const sessionCookie = cookieStore.get('session');
-      if (sessionCookie?.value) {
-        const mockSession = JSON.parse(sessionCookie.value);
-        if (mockSession?.user?.id) {
-          userId = mockSession.user.id;
-        }
-      }
+    if (!sessionCookie?.value) {
+      throw new Error("Unauthenticated");
     }
 
-    if (!userId) {
-      throw new Error("Unauthenticated");
+    const session = JSON.parse(sessionCookie.value);
+    if (!session?.userId) {
+      throw new Error("Invalid session");
     }
 
     // Verify user exists in database
     const existingUsers = await db
       .select()
       .from(user)
-      .where(eq(user.id, userId))
+      .where(eq(user.id, session.userId))
       .limit(1);
 
     if (existingUsers.length === 0) {

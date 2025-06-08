@@ -125,24 +125,21 @@ export async function POST(req: NextRequest) {
                     .where(eq(user.id, finalUserId))
                     .limit(1);
 
-                const response = {
-                    user: {
-                        id: userDetails.id,
-                        name: userDetails.name,
-                        email: userDetails.email,
-                        image: userDetails.image,
-                    },
-                    session: {
-                        id: sessionId,
-                        expiresAt: expiresAt.toISOString(),
-                        token: token
-                    }
+                // Create a simpler session format
+                const session = {
+                    id: sessionId,
+                    userId: finalUserId,
+                    expiresAt: expiresAt.toISOString(),
+                    token: token
                 };
 
-                // Set the session cookie
-                const sessionCookie = `session=${JSON.stringify(response)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+                // Set the session cookie with a simpler format
+                const sessionCookie = `session=${JSON.stringify(session)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
                 
-                return NextResponse.json(response, { 
+                return NextResponse.json({ 
+                    user: userDetails,
+                    session: session
+                }, { 
                     headers: {
                         ...corsHeaders,
                         'Set-Cookie': sessionCookie
