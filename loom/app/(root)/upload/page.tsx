@@ -48,6 +48,30 @@ const Page = () => {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // Check for recorded video in sessionStorage
+        const recordedVideoData = sessionStorage.getItem("recordedVideo");
+        if (recordedVideoData) {
+            try {
+                const { url, name, type, size, duration } = JSON.parse(recordedVideoData);
+                
+                // Create a File object from the recorded video
+                fetch(url)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], name, { type });
+                        video.handleFileChange({ target: { files: [file] } } as any);
+                        setVideoDuration(duration);
+                    });
+                
+                // Clean up sessionStorage
+                sessionStorage.removeItem("recordedVideo");
+            } catch (error) {
+                console.error("Error processing recorded video:", error);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         const file = video.file;
         if (file) {
             (async () => {

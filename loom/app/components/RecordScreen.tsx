@@ -47,7 +47,7 @@ const RecordScreen = () => {
         name: "screen-recording.webm",
         type: recordedBlob.type,
         size: recordedBlob.size,
-        duration: recordingDuration || 0, // Store the duration with the video data
+        duration: recordingDuration || 0,
       })
     );
     router.push("/upload");
