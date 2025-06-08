@@ -70,14 +70,18 @@ export const { GET } = authHandlers;
 
 export async function POST(req: NextRequest) {
     try {
+        console.log('=== auth POST START ===');
         // Try the normal auth flow first
         const response = await authHandlers.POST(req);
         return response;
     } catch (error) {
+        console.log('Auth flow failed, checking for email sign-in');
         // If it fails, check if it's an email sign-in request
         const body = await req.clone().json();
         if (body.email) {
             try {
+                console.log('Processing email sign-in for:', body.email);
+                
                 // First check if user already exists
                 const existingUsers = await db
                     .select()
@@ -88,6 +92,7 @@ export async function POST(req: NextRequest) {
                 let finalUserId;
                 if (existingUsers.length > 0) {
                     finalUserId = existingUsers[0].id;
+                    console.log('Found existing user:', finalUserId);
                 } else {
                     // Create new user
                     finalUserId = uuidv4();
@@ -101,6 +106,7 @@ export async function POST(req: NextRequest) {
                         createdAt: now,
                         updatedAt: now,
                     });
+                    console.log('Created new user:', finalUserId);
                 }
 
                 // Create a session
@@ -117,6 +123,7 @@ export async function POST(req: NextRequest) {
                     createdAt: now,
                     updatedAt: now,
                 });
+                console.log('Created session:', sessionId);
 
                 // Get the user details
                 const [userDetails] = await db
@@ -140,10 +147,12 @@ export async function POST(req: NextRequest) {
                     }
                 };
 
+                console.log('Created session object:', session);
+
                 // Set the session cookie
                 const sessionCookie = `session=${JSON.stringify(session)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
                 
-                return NextResponse.json({ 
+                const response = NextResponse.json({ 
                     user: userDetails,
                     session: session
                 }, { 
@@ -152,6 +161,9 @@ export async function POST(req: NextRequest) {
                         'Set-Cookie': sessionCookie
                     }
                 });
+
+                console.log('Sending response with cookie');
+                return response;
             } catch (error) {
                 console.error('Error in email sign-in:', error);
                 return NextResponse.json(
@@ -163,5 +175,7 @@ export async function POST(req: NextRequest) {
         
         // If it's not an email sign-in, return the original error
         throw error;
+    } finally {
+        console.log('=== auth POST END ===');
     }
 }

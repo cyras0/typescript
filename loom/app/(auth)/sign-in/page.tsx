@@ -27,32 +27,35 @@ const Page = () => {
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      console.log('Starting email sign in with:', email);
-      
-      const response = await fetch('/api/auth/sign-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-        credentials: 'include'
-      });
+        console.log('=== handleEmailSignIn START ===');
+        console.log('Starting email sign in with:', email);
+        
+        const response = await fetch('/api/auth/sign-in', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+            credentials: 'include' // Important for cookies
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to sign in');
-      }
+        if (!response.ok) {
+            throw new Error('Failed to sign in');
+        }
 
-      const data = await response.json();
-      console.log('Sign in response:', data);
-      
-      // Store session in localStorage
-      localStorage.setItem('mockSession', JSON.stringify(data));
-      console.log('Session stored:', data);
-      
-      // Navigate to home page
-      window.location.href = '/';
+        const data = await response.json();
+        console.log('Sign in response:', data);
+        
+        // Store session in localStorage
+        localStorage.setItem('mockSession', JSON.stringify(data));
+        console.log('Session stored in localStorage:', data);
+        
+        // Navigate to home page
+        window.location.href = '/';
     } catch (error) {
-      console.error('Email sign in error:', error)
+        console.error('Email sign in error:', error)
+    } finally {
+        console.log('=== handleEmailSignIn END ===');
     }
   }
 
