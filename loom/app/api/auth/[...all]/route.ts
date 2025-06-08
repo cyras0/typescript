@@ -65,29 +65,24 @@ export const POST = async (req: NextRequest) => {
     try {
         // Handle social sign-in specifically
         if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
-            const body = await req.json();
+            // Let the auth handler process the request directly
+            const response = await authHandlers.POST(req);
+            if (!response) {
+                return NextResponse.json(
+                    { error: 'Empty response from auth handler' },
+                    { status: 500, headers: corsHeaders }
+                );
+            }
             
-            if (body.provider === 'google') {
-                const response = await authHandlers.POST(req);
-                // Check if response is empty or null
-                if (!response) {
-                    return NextResponse.json(
-                        { error: 'Empty response from auth handler' },
-                        { status: 500, headers: corsHeaders }
-                    );
-                }
-                
-                // Try to parse the response
-                try {
-                    const data = await response.json();
-                    return NextResponse.json(data, { headers: corsHeaders });
-                } catch (error) {
-                    console.error('Error parsing response:', error);
-                    return NextResponse.json(
-                        { error: 'Invalid response format' },
-                        { status: 500, headers: corsHeaders }
-                    );
-                }
+            try {
+                const data = await response.json();
+                return NextResponse.json(data, { headers: corsHeaders });
+            } catch (error) {
+                console.error('Error parsing response:', error);
+                return NextResponse.json(
+                    { error: 'Invalid response format' },
+                    { status: 500, headers: corsHeaders }
+                );
             }
         }
 
