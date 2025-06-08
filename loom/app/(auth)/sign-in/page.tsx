@@ -27,10 +27,18 @@ const Page = () => {
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      console.log('Starting email sign in with:', email);
+      
       // Store the email in localStorage
       localStorage.setItem('userEmail', email)
-      // Redirect to home page
-      router.push('/')
+      console.log('Email stored in localStorage');
+      
+      // Force a hard navigation to home page
+      window.location.href = '/'
+      
+      // Backup navigation method
+      // router.push('/')
+      // router.refresh()
     } catch (error) {
       console.error('Email sign in error:', error)
     }
