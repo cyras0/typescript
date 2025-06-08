@@ -132,6 +132,10 @@ export async function POST(req: NextRequest) {
                     .where(eq(user.id, finalUserId))
                     .limit(1);
 
+                if (!userDetails) {
+                    throw new Error('User details not found after creation');
+                }
+
                 // Create a simpler session format
                 const session = {
                     user: {
@@ -149,8 +153,8 @@ export async function POST(req: NextRequest) {
 
                 console.log('Created session object:', session);
 
-                // Set the session cookie
-                const sessionCookie = `session=${JSON.stringify(session)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+                // Set the session cookie with proper encoding
+                const sessionCookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
                 
                 const response = NextResponse.json({ 
                     user: userDetails,

@@ -5,21 +5,34 @@ import { eq } from 'drizzle-orm';
 
 export async function getSession() {
   console.log('=== getSession START ===');
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('session');
-  
-  console.log('Session cookie:', sessionCookie);
-  
-  if (!sessionCookie?.value) {
-    console.log('No session cookie found');
-    return null;
-  }
-
   try {
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('session');
+    
+    console.log('Session cookie:', sessionCookie);
+    
+    if (!sessionCookie?.value) {
+      console.log('No session cookie found');
+      return null;
+    }
+
     const session = JSON.parse(sessionCookie.value);
     console.log('Parsed session:', session);
     
-    if (!session?.user?.id) {
+    // Check if we have a valid session structure
+    if (!session || typeof session !== 'object') {
+      console.log('Invalid session structure');
+      return null;
+    }
+
+    // Check if we have a user object
+    if (!session.user || typeof session.user !== 'object') {
+      console.log('No user object in session');
+      return null;
+    }
+
+    // Check if we have a user ID
+    if (!session.user.id || typeof session.user.id !== 'string') {
       console.log('No user ID in session');
       return null;
     }
@@ -33,7 +46,7 @@ export async function getSession() {
 
     console.log('Existing users:', existingUsers);
 
-    if (existingUsers.length === 0) {
+    if (!existingUsers || existingUsers.length === 0) {
       console.log('User not found in database');
       return null;
     }
@@ -41,7 +54,7 @@ export async function getSession() {
     console.log('Valid session found');
     return session;
   } catch (error) {
-    console.error('Error parsing session:', error);
+    console.error('Error in getSession:', error);
     return null;
   } finally {
     console.log('=== getSession END ===');
@@ -50,9 +63,18 @@ export async function getSession() {
 
 export async function getUserId(): Promise<string | null> {
   console.log('=== getUserId START ===');
-  const session = await getSession();
-  const userId = session?.user?.id || null;
-  console.log('User ID:', userId);
-  console.log('=== getUserId END ===');
-  return userId;
+  try {
+    const session = await getSession();
+    if (!session?.user?.id) {
+      console.log('No user ID found in session');
+      return null;
+    }
+    console.log('User ID found:', session.user.id);
+    return session.user.id;
+  } catch (error) {
+    console.error('Error in getUserId:', error);
+    return null;
+  } finally {
+    console.log('=== getUserId END ===');
+  }
 } 
