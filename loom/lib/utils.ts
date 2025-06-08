@@ -74,7 +74,15 @@ export const apiFetch = async <T = Record<string, unknown>>(
   const response = await fetch(url, requestOptions);
 
   if (!response.ok) {
-    throw new Error(`API error ${response.text()}`);
+    const errorText = await response.text();
+    console.error('Bunny API error details:', {
+      status: response.status,
+      statusText: response.statusText,
+      errorText,
+      url,
+      method
+    });
+    throw new Error(`Bunny API error: ${errorText}`);
   }
 
   if (method === "DELETE" || !expectJson) {
