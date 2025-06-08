@@ -4,7 +4,7 @@ import VideoCard from "@/app/components/VideoCard";
 import Header from "@/app/components/header";
 import Pagination from "@/app/components/Pagination";
 import { getAllVideos } from "@/lib/actions/video";
-import { EmptyState as EmptyStateComponent, VideoCard as VideoCardComponent, Pagination as PaginationComponent } from "@/app/components";
+import { cookies } from 'next/headers';
 
 const HomePage = async ({ 
   searchParams 
@@ -16,6 +16,11 @@ const HomePage = async ({
   } 
 }) => {
   console.log('=== HomePage START ===');
+  
+  // Get mock session from cookies
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('session');
+  const mockSession = sessionCookie ? JSON.parse(sessionCookie.value) : null;
   
   // Await the searchParams
   const params = await searchParams;
@@ -40,6 +45,11 @@ const HomePage = async ({
     if (!videos || videos.length === 0) {
       return (
         <main className="wrapper page">
+          <Header 
+            subHeader="Welcome" 
+            title={mockSession?.user?.name || "Guest"} 
+            userImg={mockSession?.user?.image}
+          />
           <EmptyState
             icon="/assets/icons/video.svg"
             title="No Videos Available Yet"
@@ -51,7 +61,11 @@ const HomePage = async ({
 
     return (
       <main className="wrapper page">
-        <Header subHeader="Public Library" title="All Videos" />
+        <Header 
+          subHeader="Public Library" 
+          title="All Videos" 
+          userImg={mockSession?.user?.image}
+        />
 
         <section className="video-grid">
           {videos.map(({ video, user }) => (
@@ -87,6 +101,11 @@ const HomePage = async ({
     console.error('Home page error:', error);
     return (
       <main className="wrapper page">
+        <Header 
+          subHeader="Welcome" 
+          title={mockSession?.user?.name || "Guest"} 
+          userImg={mockSession?.user?.image}
+        />
         <EmptyState
           icon="/assets/icons/video.svg"
           title="Error Loading Videos"

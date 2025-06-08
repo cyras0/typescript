@@ -20,16 +20,20 @@ const Header = ({subHeader, title, userImg}: SharedHeaderProps) => {
         </div>
 
         <aside>
-            <Link href="/upload">
-                <Image src="/assets/icons/upload.svg" alt="upload" width={16} height={16} />
-                <span>Upload a video</span>
-            </Link>
-            <div className="record">
-                <button className="btn-primary">
-                    <Image src={ICONS.record} alt="record" width={16} height={16} />
-                    <span>Record a video</span>
-                </button>
-            </div>
+            {userImg && (
+              <>
+                <Link href="/upload">
+                    <Image src="/assets/icons/upload.svg" alt="upload" width={16} height={16} />
+                    <span>Upload a video</span>
+                </Link>
+                <div className="record">
+                    <button className="btn-primary">
+                        <Image src={ICONS.record} alt="record" width={16} height={16} />
+                        <span>Record a video</span>
+                    </button>
+                </div>
+              </>
+            )}
         </aside>
       </section>
 
