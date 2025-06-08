@@ -65,12 +65,13 @@ export const POST = async (req: NextRequest) => {
     try {
         if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
             console.log('Social sign-in request received');
-            // Log the request body
-            const body = await req.clone().json();
-            console.log('Request body:', body);
-            
-            // Log the request headers
-            console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+            console.log('Auth configuration:', {
+                baseURL: process.env.NEXT_PUBLIC_BASE_URL,
+                hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
+                hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+                pathname: req.nextUrl.pathname,
+                searchParams: Object.fromEntries(req.nextUrl.searchParams)
+            });
             
             const response = await authHandlers.POST(req);
             console.log('Auth handler response:', {
@@ -103,7 +104,6 @@ export const POST = async (req: NextRequest) => {
         }
     } catch (error) {
         console.error('Error in auth POST handler:', error);
-        // Log the full error stack
         console.error('Full error stack:', error.stack);
         return NextResponse.json(
             { error: 'Authentication failed', details: error.message },
