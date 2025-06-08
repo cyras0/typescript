@@ -63,27 +63,17 @@ const authHandlers = toNextJsHandler(auth.handler);
 
 export const POST = async (req: NextRequest) => {
     try {
-        // Handle social sign-in specifically
+        // For social sign-in, skip the protection
         if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
-            // Let the auth handler process the request directly
+            console.log('Social sign-in request received');
             const response = await authHandlers.POST(req);
-            if (!response) {
-                return NextResponse.json(
-                    { error: 'Empty response from auth handler' },
-                    { status: 500, headers: corsHeaders }
-                );
-            }
-            
-            try {
-                const data = await response.json();
-                return NextResponse.json(data, { headers: corsHeaders });
-            } catch (error) {
-                console.error('Error parsing response:', error);
-                return NextResponse.json(
-                    { error: 'Invalid response format' },
-                    { status: 500, headers: corsHeaders }
-                );
-            }
+            console.log('Auth handler response:', {
+                status: response?.status,
+                statusText: response?.statusText,
+                headers: Object.fromEntries(response?.headers || []),
+                body: await response?.text().catch(() => 'Could not read body')
+            });
+            return response;
         }
 
         // For other auth routes
