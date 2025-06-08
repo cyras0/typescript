@@ -94,16 +94,24 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
+    // Get the session cookie directly
     const cookieStore = cookies();
     const sessionCookie = cookieStore.get('session');
     
     if (!sessionCookie?.value) {
-      throw new Error("Unauthenticated");
+      return "Unauthenticated";
     }
 
-    const session = JSON.parse(sessionCookie.value);
+    let session;
+    try {
+      session = JSON.parse(sessionCookie.value);
+    } catch (error) {
+      console.error('Error parsing session cookie:', error);
+      return "Invalid session format";
+    }
+
     if (!session?.userId) {
-      throw new Error("Invalid session");
+      return "Invalid session data";
     }
 
     // Verify user exists in database
@@ -114,7 +122,7 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
       .limit(1);
 
     if (existingUsers.length === 0) {
-      throw new Error("User not found in database");
+      return "User not found in database";
     }
   
     const videoResponse = await apiFetch<BunnyVideoResponse>(
@@ -134,7 +142,7 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     };
   } catch (error) {
     console.error('Error in getVideoUploadUrl:', error);
-    throw error;
+    return "Server error occurred";
   }
 });
 
