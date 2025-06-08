@@ -113,7 +113,9 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
       return "Invalid session format";
     }
 
-    if (!session?.userId) {
+    // Get userId from the nested user object
+    const userId = session?.user?.id;
+    if (!userId) {
       console.log('Session missing userId:', session);
       return "Invalid session data";
     }
@@ -122,7 +124,7 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     const existingUsers = await db
       .select()
       .from(user)
-      .where(eq(user.id, session.userId))
+      .where(eq(user.id, userId))
       .limit(1);
 
     console.log('Existing users:', existingUsers);
