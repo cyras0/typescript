@@ -93,23 +93,59 @@ const buildVideoWithUserQuery = () =>
 
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
-  await getSessionUserId(); // This will throw if not authenticated
-  
-  const videoResponse = await apiFetch<BunnyVideoResponse>(
-    `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
-    {
-      method: 'POST',
-      bunnyType: 'stream',
-      body: { title: 'Temporary Title', collectionId: '' },
+  try {
+    // First try to get real session
+    const session = await auth.api.getSession({ headers: await headers() });
+    let userId;
+    
+    if (session?.user?.id) {
+      userId = session.user.id;
+    } else {
+      // If no real session, check for mock session
+      const cookieStore = cookies();
+      const sessionCookie = cookieStore.get('session');
+      if (sessionCookie?.value) {
+        const mockSession = JSON.parse(sessionCookie.value);
+        if (mockSession?.user?.id) {
+          userId = mockSession.user.id;
+        }
+      }
     }
-  );
 
-  const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
-  return {
-    videoId: videoResponse.guid,
-    uploadUrl,
-    AccessKey: ACCESS_KEYS.streamAccessKey,
-  };
+    if (!userId) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Verify user exists in database
+    const existingUsers = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+
+    if (existingUsers.length === 0) {
+      throw new Error("User not found in database");
+    }
+  
+    const videoResponse = await apiFetch<BunnyVideoResponse>(
+      `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+      {
+        method: 'POST',
+        bunnyType: 'stream',
+        body: { title: 'Temporary Title', collectionId: '' },
+      }
+    );
+
+    const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+    return {
+      videoId: videoResponse.guid,
+      uploadUrl,
+      AccessKey: ACCESS_KEYS.streamAccessKey,
+    };
+  } catch (error) {
+    console.error('Error in getVideoUploadUrl:', error);
+    throw error;
+  }
 });
 
 // Keep the original function for internal use

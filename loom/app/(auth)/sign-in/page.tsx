@@ -35,6 +35,7 @@ const Page = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -46,17 +47,9 @@ const Page = () => {
       // Store session in localStorage
       localStorage.setItem('mockSession', JSON.stringify({ user, session }));
       console.log('Session stored:', { user, session });
-
-      // Set the cookie with proper attributes
-      const sessionCookie = `session=${JSON.stringify({ user, session })}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
-      document.cookie = sessionCookie;
       
-      console.log('Cookie set, attempting navigation...');
-      
-      // Small delay to ensure cookie is set
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 100);
+      // Navigate to home page
+      window.location.href = '/';
     } catch (error) {
       console.error('Email sign in error:', error)
     }

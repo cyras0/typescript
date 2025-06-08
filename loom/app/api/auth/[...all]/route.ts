@@ -107,12 +107,13 @@ export async function POST(req: NextRequest) {
                 const sessionId = uuidv4();
                 const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
                 const now = new Date();
+                const token = uuidv4();
                 
                 await db.insert(sessionTable).values({
                     id: sessionId,
                     userId: finalUserId,
                     expiresAt: expiresAt,
-                    token: uuidv4(),
+                    token: token,
                     createdAt: now,
                     updatedAt: now,
                 });
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest) {
                     .where(eq(user.id, finalUserId))
                     .limit(1);
 
-                return NextResponse.json({
+                const response = {
                     user: {
                         id: userDetails.id,
                         name: userDetails.name,
@@ -134,8 +135,19 @@ export async function POST(req: NextRequest) {
                     session: {
                         id: sessionId,
                         expiresAt: expiresAt.toISOString(),
+                        token: token
                     }
-                }, { headers: corsHeaders });
+                };
+
+                // Set the session cookie
+                const sessionCookie = `session=${JSON.stringify(response)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+                
+                return NextResponse.json(response, { 
+                    headers: {
+                        ...corsHeaders,
+                        'Set-Cookie': sessionCookie
+                    }
+                });
             } catch (error) {
                 console.error('Error in email sign-in:', error);
                 return NextResponse.json(
