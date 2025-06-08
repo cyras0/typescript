@@ -29,16 +29,30 @@ const Page = () => {
     try {
       console.log('Starting email sign in with:', email);
       
-      // Store the email in localStorage
+      // Create a mock session
+      const mockSession = {
+        user: {
+          id: 'temp-user-id',
+          name: email.split('@')[0],
+          email: email,
+          image: `https://www.gravatar.com/avatar/${email}?d=mp&f=y`
+        },
+        session: {
+          id: 'temp-session-id',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        }
+      };
+
+      // Store both email and session in localStorage
       localStorage.setItem('userEmail', email)
-      console.log('Email stored in localStorage');
+      localStorage.setItem('mockSession', JSON.stringify(mockSession))
+      console.log('Mock session stored:', mockSession);
+
+      // Try to set a cookie for the session
+      document.cookie = `session=${JSON.stringify(mockSession)}; path=/; max-age=${24 * 60 * 60}`;
       
       // Force a hard navigation to home page
       window.location.href = '/'
-      
-      // Backup navigation method
-      // router.push('/')
-      // router.refresh()
     } catch (error) {
       console.error('Email sign in error:', error)
     }
