@@ -7,7 +7,7 @@ import aj, {
 import ip from "@arcjet/ip";
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 // Add CORS headers helper
 const corsHeaders = {
@@ -61,82 +61,21 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
 
 const authHandlers = toNextJsHandler(auth.handler);
 
+export const { GET } = authHandlers;
+
 export const POST = async (req: NextRequest) => {
-    try {
-        if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
-            console.log('Social sign-in request received');
-            console.log('Auth configuration:', {
-                baseURL: process.env.NEXT_PUBLIC_BASE_URL,
-                hasGoogleClientId: !!process.env.GOOGLE_CLIENT_ID,
-                hasGoogleClientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-                pathname: req.nextUrl.pathname,
-                searchParams: Object.fromEntries(req.nextUrl.searchParams)
-            });
-            
-            const response = await authHandlers.POST(req);
-            console.log('Auth handler response:', {
-                status: response?.status,
-                statusText: response?.statusText,
-                headers: Object.fromEntries(response?.headers || []),
-                body: await response?.text().catch(() => 'Could not read body')
-            });
-            return response;
+    const decision = await protectedAuth(req);
+    if(decision.isDenied()) {
+        if(decision.reason.isEmail()) {
+            throw new Error('Email validation failed')
         }
-
-        // For other auth routes
-        const response = await authHandlers.POST(req);
-        if (!response) {
-            return NextResponse.json(
-                { error: 'Empty response from auth handler' },
-                { status: 500, headers: corsHeaders }
-            );
+        if(decision.reason.isRateLimit()) {
+            throw new Error('Rate limit exceeded')
         }
-
-        try {
-            const data = await response.json();
-            return NextResponse.json(data, { headers: corsHeaders });
-        } catch (error) {
-            console.error('Error parsing response:', error);
-            return NextResponse.json(
-                { error: 'Invalid response format' },
-                { status: 500, headers: corsHeaders }
-            );
+        if(decision.reason.isShield()) {
+            throw new Error('Shield validation failed')
         }
-    } catch (error) {
-        console.error('Error in auth POST handler:', error);
-        console.error('Full error stack:', error.stack);
-        return NextResponse.json(
-            { error: 'Authentication failed', details: error.message },
-            { status: 500, headers: corsHeaders }
-        );
     }
-}
-
-export const GET = async (req: NextRequest) => {
-    try {
-        const response = await authHandlers.GET(req);
-        if (!response) {
-            return NextResponse.json(
-                { error: 'Empty response from auth handler' },
-                { status: 500, headers: corsHeaders }
-            );
-        }
-
-        try {
-            const data = await response.json();
-            return NextResponse.json(data, { headers: corsHeaders });
-        } catch (error) {
-            console.error('Error parsing response:', error);
-            return NextResponse.json(
-                { error: 'Invalid response format' },
-                { status: 500, headers: corsHeaders }
-            );
-        }
-    } catch (error) {
-        console.error('Error in auth GET handler:', error);
-        return NextResponse.json(
-            { error: 'Authentication failed', details: error.message },
-            { status: 500, headers: corsHeaders }
-        );
-    }
+    
+    return authHandlers.POST(req);
 } 
