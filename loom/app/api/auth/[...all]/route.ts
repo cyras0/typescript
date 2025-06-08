@@ -9,7 +9,7 @@ import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from '@/drizzle/db';
-import { user } from '@/drizzle/schema';
+import { user, session as sessionTable } from '@/drizzle/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -69,42 +69,63 @@ export const { GET } = authHandlers;
 
 export async function POST(req: NextRequest) {
     try {
-      const { email, name, image } = await req.json();
-  
-      // Create a new user
-      const userId = uuidv4();
-      const now = new Date();
-  
-      await db.insert(user).values({
-        id: userId,
-        name,
-        email,
-        image,
-        emailVerified: true,
-        createdAt: now,
-        updatedAt: now,
-      });
-  
-      // Create a session
-      const session = {
-        id: uuidv4(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      };
-  
-      return NextResponse.json({
-        user: {
-          id: userId,
-          name,
-          email,
-          image,
-        },
-        session,
-      });
+        // Try the normal auth flow first
+        const response = await authHandlers.POST(req);
+        return response;
     } catch (error) {
-      console.error('Error creating user:', error);
-      return NextResponse.json(
-        { error: 'Failed to create user' },
-        { status: 500 }
-      );
+        // If it fails, check if it's an email sign-in request
+        const body = await req.clone().json();
+        if (body.email) {
+            try {
+                // Create a new user
+                const userId = uuidv4();
+                const now = new Date();
+
+                await db.insert(user).values({
+                    id: userId,
+                    name: body.email.split('@')[0],
+                    email: body.email,
+                    image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
+                    emailVerified: true,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+
+                // Create a session
+                const sessionId = uuidv4();
+                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                
+                await db.insert(sessionTable).values({
+                    id: sessionId,
+                    userId: userId,
+                    expiresAt: expiresAt,
+                    token: uuidv4(),
+                    createdAt: now,
+                    updatedAt: now,
+                });
+
+                return NextResponse.json({
+                    user: {
+                        id: userId,
+                        name: body.email.split('@')[0],
+                        email: body.email,
+                        image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
+                    },
+                    session: {
+                        id: sessionId,
+                        expiresAt: expiresAt.toISOString(),
+                    }
+                }, { headers: corsHeaders });
+            } catch (error) {
+                console.error('Error in email sign-in:', error);
+                return NextResponse.json(
+                    { error: 'Failed to create user' },
+                    { status: 500 }
+                );
+            }
+        }
+        
+        // If it's not an email sign-in, return the original error
+        throw error;
     }
-  }
+}

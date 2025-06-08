@@ -29,21 +29,16 @@ const Page = () => {
     try {
       console.log('Starting email sign in with:', email);
       
-      // Create a real user in the database
-      const response = await fetch('/api/auth/create-user', {
+      const response = await fetch('/api/auth/sign-in', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email,
-          name: email.split('@')[0],
-          image: `https://www.gravatar.com/avatar/${email}?d=mp&f=y`
-        }),
+        body: JSON.stringify({ email }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create user');
+        throw new Error('Failed to sign in');
       }
 
       const { user, session } = await response.json();
