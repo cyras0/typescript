@@ -20,7 +20,7 @@ const Page = async ({ params }: { params: { videoId: string } }) => {
       <h1 className="text-2xl">{video.id}</h1>
       <section className="video-details">
         <div className="content">
-           <VideoPlayer videoId={video.id} />
+           <VideoPlayer videoId={video.videoId} />
         </div>
       </section>
     </main>

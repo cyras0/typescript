@@ -3,6 +3,9 @@ import { BUNNY } from '@/constants';
 import { getEnv } from '@/lib/utils';
 
 const VideoPlayer = ({videoId}: VideoPlayerProps) => {
+  console.log('=== VideoPlayer START ===');
+  console.log('Input videoId:', videoId);
+  
   const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
   const iframeUrl = `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoId}`;
   

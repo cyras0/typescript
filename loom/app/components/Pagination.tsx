@@ -7,50 +7,36 @@ import Image from 'next/image'
 interface PaginationProps {
   currentPage: number
   totalPages: number
-  queryString?: string
-  filterString?: string
+  baseUrl: string
+  queryParams?: Record<string, string>
 }
 
-const Pagination = ({ currentPage, totalPages, queryString, filterString }: PaginationProps) => {
-  const getPageUrl = (page: number) => {
-    const params = new URLSearchParams()
-    if (queryString) params.append('query', queryString)
-    if (filterString) params.append('filter', filterString)
-    params.append('page', page.toString())
-    return `?${params.toString()}`
+const Pagination = ({ currentPage, totalPages, baseUrl, queryParams = {} }: PaginationProps) => {
+  const buildUrl = (page: number) => {
+    const params = new URLSearchParams({
+      ...queryParams,
+      page: page.toString()
+    })
+    return `${baseUrl}?${params.toString()}`
   }
 
   return (
     <div className="pagination">
-      <Link 
-        href={getPageUrl(currentPage - 1)}
-        className={`pagination-button ${currentPage === 1 ? 'disabled' : ''}`}
-        aria-disabled={currentPage === 1}
-      >
-        <Image src="/assets/icons/arrow-left.svg" alt="Previous" width={16} height={16} />
-        Previous
-      </Link>
-
-      <div className="pagination-numbers">
-        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-          <Link
-            key={page}
-            href={getPageUrl(page)}
-            className={`pagination-number ${currentPage === page ? 'active' : ''}`}
-          >
-            {page}
-          </Link>
-        ))}
-      </div>
-
-      <Link 
-        href={getPageUrl(currentPage + 1)}
-        className={`pagination-button ${currentPage === totalPages ? 'disabled' : ''}`}
-        aria-disabled={currentPage === totalPages}
-      >
-        Next
-        <Image src="/assets/icons/arrow-right.svg" alt="Next" width={16} height={16} />
-      </Link>
+      {currentPage > 1 && (
+        <Link href={buildUrl(currentPage - 1)} className="pagination-link">
+          Previous
+        </Link>
+      )}
+      
+      <span className="pagination-info">
+        Page {currentPage} of {totalPages}
+      </span>
+      
+      {currentPage < totalPages && (
+        <Link href={buildUrl(currentPage + 1)} className="pagination-link">
+          Next
+        </Link>
+      )}
     </div>
   )
 }

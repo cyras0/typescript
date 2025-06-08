@@ -4,21 +4,55 @@ import VideoCard from "@/app/components/VideoCard";
 import Header from "@/app/components/header";
 import Pagination from "@/app/components/Pagination";
 import { getAllVideos } from "@/lib/actions/video";
+import { EmptyState as EmptyStateComponent, VideoCard as VideoCardComponent, Pagination as PaginationComponent } from "@/app/components";
 
-const page = async ({ searchParams }: SearchParams) => {
-  const { query, filter, page } = await searchParams;
+const HomePage = async ({ 
+  searchParams 
+}: { 
+  searchParams: { 
+    query?: string; 
+    filter?: string;
+    page?: string;
+  } 
+}) => {
+  console.log('=== HomePage START ===');
+  
+  // Await the searchParams
+  const params = await searchParams;
+  console.log('Search params:', params);
+  
+  const currentPage = Number(params.page) || 1;
+  const perPage = 12;
+  
+  try {
+    const { videos, pagination } = await getAllVideos(
+      params.query, 
+      params.filter,
+      currentPage,
+      perPage
+    );
 
-  const { videos, pagination } = await getAllVideos(
-    query,
-    filter,
-    Number(page) || 1
-  );
+    console.log('Home page data:', {
+      videosCount: videos?.length,
+      pagination
+    });
 
-  return (
-    <main className="wrapper page">
-      <Header subHeader="Public Library" title="All Videos" />
+    if (!videos || videos.length === 0) {
+      return (
+        <main className="wrapper page">
+          <EmptyState
+            icon="/assets/icons/video.svg"
+            title="No Videos Available Yet"
+            description="Video will show up here once you upload them."
+          />
+        </main>
+      );
+    }
 
-      {videos?.length > 0 ? (
+    return (
+      <main className="wrapper page">
+        <Header subHeader="Public Library" title="All Videos" />
+
         <section className="video-grid">
           {videos.map(({ video, user }) => (
             <VideoCard
@@ -35,24 +69,32 @@ const page = async ({ searchParams }: SearchParams) => {
             />
           ))}
         </section>
-      ) : (
+        
+        {pagination.totalPages > 1 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            baseUrl="/"
+            queryParams={{
+              ...(params.query && { query: params.query }),
+              ...(params.filter && { filter: params.filter })
+            }}
+          />
+        )}
+      </main>
+    );
+  } catch (error) {
+    console.error('Home page error:', error);
+    return (
+      <main className="wrapper page">
         <EmptyState
           icon="/assets/icons/video.svg"
-          title="No Videos Found"
-          description="Try adjusting your search."
+          title="Error Loading Videos"
+          description="There was an error loading the videos. Please try again later."
         />
-      )}
-
-      {pagination?.totalPages > 1 && (
-        <Pagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          queryString={query}
-          filterString={filter}
-        />
-      )}
-    </main>
-  );
+      </main>
+    );
+  }
 };
 
-export default page;
+export default HomePage;
