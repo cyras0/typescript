@@ -166,33 +166,6 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   );
   console.log('Bunny API call completed');
 
-  // Get mock session to create user if needed
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('session');
-  const mockSession = sessionCookie ? JSON.parse(sessionCookie.value) : null;
-
-  // Create user if it doesn't exist
-  try {
-    const existingUser = await db.query.user.findFirst({
-      where: eq(user.id, userId)
-    });
-
-    if (!existingUser && mockSession?.user) {
-      console.log('Creating new user record');
-      await db.insert(user).values({
-        id: userId,
-        name: mockSession.user.name,
-        email: mockSession.user.email,
-        image: mockSession.user.image,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
-    }
-  } catch (error) {
-    console.error('Error creating user:', error);
-    throw error;
-  }
-
   // Save to database
   const now = new Date();
   const dbData = {

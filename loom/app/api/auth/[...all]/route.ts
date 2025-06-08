@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from '@/drizzle/db';
 import { user, session as sessionTable } from '@/drizzle/schema';
 import { v4 as uuidv4 } from 'uuid';
+import { eq } from 'drizzle-orm';
 
 
 // Add CORS headers helper
@@ -81,15 +82,28 @@ export async function POST(req: NextRequest) {
                 const userId = uuidv4();
                 const now = new Date();
 
-                await db.insert(user).values({
-                    id: userId,
-                    name: body.email.split('@')[0],
-                    email: body.email,
-                    image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
-                    emailVerified: true,
-                    createdAt: now,
-                    updatedAt: now,
-                });
+                // First check if user already exists
+                const existingUsers = await db
+                    .select()
+                    .from(user)
+                    .where(eq(user.email, body.email))
+                    .limit(1);
+
+                let finalUserId = userId;
+                if (existingUsers.length > 0) {
+                    finalUserId = existingUsers[0].id;
+                } else {
+                    // Create new user
+                    await db.insert(user).values({
+                        id: userId,
+                        name: body.email.split('@')[0],
+                        email: body.email,
+                        image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
+                        emailVerified: true,
+                        createdAt: now,
+                        updatedAt: now,
+                    });
+                }
 
                 // Create a session
                 const sessionId = uuidv4();
@@ -97,7 +111,7 @@ export async function POST(req: NextRequest) {
                 
                 await db.insert(sessionTable).values({
                     id: sessionId,
-                    userId: userId,
+                    userId: finalUserId,
                     expiresAt: expiresAt,
                     token: uuidv4(),
                     createdAt: now,
@@ -106,7 +120,7 @@ export async function POST(req: NextRequest) {
 
                 return NextResponse.json({
                     user: {
-                        id: userId,
+                        id: finalUserId,
                         name: body.email.split('@')[0],
                         email: body.email,
                         image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
