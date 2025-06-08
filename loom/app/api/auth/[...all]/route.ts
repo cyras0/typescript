@@ -8,6 +8,10 @@ import ip from "@arcjet/ip";
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest, NextResponse } from "next/server";
+import { db } from '@/drizzle/db';
+import { user } from '@/drizzle/schema';
+import { v4 as uuidv4 } from 'uuid';
+
 
 // Add CORS headers helper
 const corsHeaders = {
@@ -63,24 +67,44 @@ const authHandlers = toNextJsHandler(auth.handler);
 
 export const { GET } = authHandlers;
 
-export const POST = async (req: NextRequest) => {
+export async function POST(req: NextRequest) {
     try {
-        // Try the normal auth flow first
-        const response = await authHandlers.POST(req);
-        return response;
+      const { email, name, image } = await req.json();
+  
+      // Create a new user
+      const userId = uuidv4();
+      const now = new Date();
+  
+      await db.insert(user).values({
+        id: userId,
+        name,
+        email,
+        image,
+        emailVerified: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+  
+      // Create a session
+      const session = {
+        id: uuidv4(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      };
+  
+      return NextResponse.json({
+        user: {
+          id: userId,
+          name,
+          email,
+          image,
+        },
+        session,
+      });
     } catch (error) {
-        // If it fails, return a mock successful response
-        return NextResponse.json({
-            user: {
-                id: 'temp-user-id',
-                name: 'Test User',
-                email: 'test@example.com',
-                image: 'https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y'
-            },
-            session: {
-                id: 'temp-session-id',
-                expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-            }
-        }, { headers: corsHeaders });
+      console.error('Error creating user:', error);
+      return NextResponse.json(
+        { error: 'Failed to create user' },
+        { status: 500 }
+      );
     }
-} 
+  }

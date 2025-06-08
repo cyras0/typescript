@@ -29,27 +29,31 @@ const Page = () => {
     try {
       console.log('Starting email sign in with:', email);
       
-      // Create a mock session
-      const mockSession = {
-        user: {
-          id: 'temp-user-id',
-          name: email.split('@')[0],
-          email: email,
-          image: `https://www.gravatar.com/avatar/${email}?d=mp&f=y`
+      // Create a real user in the database
+      const response = await fetch('/api/auth/create-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        session: {
-          id: 'temp-session-id',
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        }
-      };
+        body: JSON.stringify({
+          email,
+          name: email.split('@')[0],
+          image: `https://www.gravatar.com/avatar/${email}?d=mp&f=y`
+        }),
+      });
 
-      // Store both email and session in localStorage
-      localStorage.setItem('userEmail', email)
-      localStorage.setItem('mockSession', JSON.stringify(mockSession))
-      console.log('Mock session stored:', mockSession);
+      if (!response.ok) {
+        throw new Error('Failed to create user');
+      }
+
+      const { user, session } = await response.json();
+      
+      // Store session in localStorage
+      localStorage.setItem('mockSession', JSON.stringify({ user, session }));
+      console.log('Session stored:', { user, session });
 
       // Set the cookie with proper attributes
-      const sessionCookie = `session=${JSON.stringify(mockSession)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+      const sessionCookie = `session=${JSON.stringify({ user, session })}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
       document.cookie = sessionCookie;
       
       console.log('Cookie set, attempting navigation...');
