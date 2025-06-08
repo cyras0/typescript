@@ -40,7 +40,9 @@ const getSessionUserId = async (): Promise<string> => {
   try {
     // First try to get real session
     const session = await auth.api.getSession({ headers: await headers() });
-    if (session) return session.user.id;
+    if (session?.user?.id) {
+      return session.user.id;
+    }
   } catch (error) {
     console.log('Real session not found, checking for mock session');
   }
@@ -48,10 +50,23 @@ const getSessionUserId = async (): Promise<string> => {
   // If no real session, check for mock session
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get('session');
-  if (sessionCookie) {
-    const mockSession = JSON.parse(sessionCookie.value);
-    if (mockSession?.user?.id) {
-      return mockSession.user.id;
+  if (sessionCookie?.value) {
+    try {
+      const mockSession = JSON.parse(sessionCookie.value);
+      if (mockSession?.user?.id) {
+        // Verify this user exists in the database
+        const existingUsers = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, mockSession.user.id))
+          .limit(1);
+
+        if (existingUsers.length > 0) {
+          return mockSession.user.id;
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing session cookie:', error);
     }
   }
   

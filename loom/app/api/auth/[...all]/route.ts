@@ -78,10 +78,6 @@ export async function POST(req: NextRequest) {
         const body = await req.clone().json();
         if (body.email) {
             try {
-                // Create a new user
-                const userId = uuidv4();
-                const now = new Date();
-
                 // First check if user already exists
                 const existingUsers = await db
                     .select()
@@ -89,13 +85,15 @@ export async function POST(req: NextRequest) {
                     .where(eq(user.email, body.email))
                     .limit(1);
 
-                let finalUserId = userId;
+                let finalUserId;
                 if (existingUsers.length > 0) {
                     finalUserId = existingUsers[0].id;
                 } else {
                     // Create new user
+                    finalUserId = uuidv4();
+                    const now = new Date();
                     await db.insert(user).values({
-                        id: userId,
+                        id: finalUserId,
                         name: body.email.split('@')[0],
                         email: body.email,
                         image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
@@ -108,6 +106,7 @@ export async function POST(req: NextRequest) {
                 // Create a session
                 const sessionId = uuidv4();
                 const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+                const now = new Date();
                 
                 await db.insert(sessionTable).values({
                     id: sessionId,
@@ -118,12 +117,19 @@ export async function POST(req: NextRequest) {
                     updatedAt: now,
                 });
 
+                // Get the user details
+                const [userDetails] = await db
+                    .select()
+                    .from(user)
+                    .where(eq(user.id, finalUserId))
+                    .limit(1);
+
                 return NextResponse.json({
                     user: {
-                        id: finalUserId,
-                        name: body.email.split('@')[0],
-                        email: body.email,
-                        image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
+                        id: userDetails.id,
+                        name: userDetails.name,
+                        email: userDetails.email,
+                        image: userDetails.image,
                     },
                     session: {
                         id: sessionId,
