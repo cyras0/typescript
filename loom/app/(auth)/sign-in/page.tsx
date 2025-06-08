@@ -48,11 +48,16 @@ const Page = () => {
       localStorage.setItem('mockSession', JSON.stringify(mockSession))
       console.log('Mock session stored:', mockSession);
 
-      // Try to set a cookie for the session
-      document.cookie = `session=${JSON.stringify(mockSession)}; path=/; max-age=${24 * 60 * 60}`;
+      // Set the cookie with proper attributes
+      const sessionCookie = `session=${JSON.stringify(mockSession)}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
+      document.cookie = sessionCookie;
       
-      // Force a hard navigation to home page
-      window.location.href = '/'
+      console.log('Cookie set, attempting navigation...');
+      
+      // Small delay to ensure cookie is set
+      setTimeout(() => {
+        window.location.href = '/'
+      }, 100);
     } catch (error) {
       console.error('Email sign in error:', error)
     }
