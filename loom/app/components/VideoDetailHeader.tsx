@@ -5,7 +5,29 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 import { daysAgo } from '@/lib/utils';
 
-const VideoDetailHeader = ({title, visibility, createdAt, userImg, username, ownerId}: VideoDetailHeaderProps) => {
+interface VideoDetailHeaderProps {
+  title: string;
+  description: string;
+  views: number;
+  username: string;
+  videoId: string;
+  visibility: string;
+  createdAt: string;
+  userImg: string;
+  ownerId: string;
+}
+
+const VideoDetailHeader = ({ 
+  title, 
+  description, 
+  views, 
+  username,
+  videoId,
+  visibility,
+  createdAt,
+  userImg,
+  ownerId
+}: VideoDetailHeaderProps) => {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 

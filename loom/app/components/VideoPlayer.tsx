@@ -6,6 +6,13 @@ const VideoPlayer = ({videoId}: VideoPlayerProps) => {
   const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
   const iframeUrl = `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoId}`;
   
+  console.log('VideoPlayer details:', {
+    videoId,
+    BUNNY_LIBRARY_ID,
+    BUNNY_EMBED_URL: BUNNY.EMBED_URL,
+    iframeUrl
+  });
+  
   return (
     <div className='video-player'>
       <iframe

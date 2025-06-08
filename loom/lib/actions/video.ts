@@ -236,14 +236,19 @@ export const getAllVideos = withErrorHandling(async (
     searchQuery: string = "",
     sortFilter?: string
   ) => {
-    console.log('getAllVideosByUser called with:', { userIdParameter, searchQuery, sortFilter });
+    console.log('=== getAllVideosByUser START ===');
+    console.log('Input parameters:', { userIdParameter, searchQuery, sortFilter });
     
     const currentUserId = (
       await auth.api.getSession({ headers: await headers() })
     )?.user.id;
 
     const isOwner = userIdParameter === currentUserId;
-    console.log('User check:', { userIdParameter, currentUserId, isOwner });
+    console.log('User check:', { 
+      userIdParameter, 
+      currentUserId, 
+      isOwner
+    });
 
     // First check if user exists
     const [userInfo] = await db
@@ -279,9 +284,10 @@ export const getAllVideos = withErrorHandling(async (
       );
 
     console.log('Videos found:', userVideos.length);
+    console.log('=== getAllVideosByUser END ===');
 
     return { 
-      user: userInfo, 
+      user: userInfo, // Now userInfo is defined
       videos: userVideos,
       count: userVideos.length 
     };
