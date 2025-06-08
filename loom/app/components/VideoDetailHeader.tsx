@@ -64,9 +64,9 @@ const VideoDetailHeader = ({
             </figure>
         </aside>
         <aside className="cta">
-            <button onClick={handleCopyLink} className="flex items-center gap-2">
+            <button onClick={handleCopyLink} className="copy-btn">
                 <Image 
-                    src={copied ? "/assets/icons/check.svg" : "/assets/icons/copy.svg"} 
+                    src={copied ? "/assets/icons/check.svg" : "/assets/icons/link.svg"} 
                     alt="copy link" 
                     width={24} 
                     height={24} 
