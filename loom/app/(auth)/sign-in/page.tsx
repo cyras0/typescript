@@ -6,9 +6,17 @@ import { authClient } from '@/lib/auth-client'
 
 const Page = () => {
   const handleSignIn = async () => {
-    return await authClient.signIn.social({
-      provider: "google",
-    });
+    try {
+      console.log('Starting sign in...');
+      const response = await authClient.signIn.social({
+        provider: "google",
+      });
+      console.log('Sign in response:', response);
+      return response;
+    } catch (error) {
+      console.error('Sign in error:', error);
+      throw error;
+    }
   };
   return (
     <main className="sign-in">
