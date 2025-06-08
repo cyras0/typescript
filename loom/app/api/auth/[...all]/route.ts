@@ -11,9 +11,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Add CORS headers helper
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // In production, replace with your specific domain
+  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_BASE_URL || '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Credentials': 'true',
 };
 
 // Handle OPTIONS request for CORS preflight
@@ -61,25 +62,88 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
 const authHandlers = toNextJsHandler(auth.handler);
 
 export const POST = async (req: NextRequest) => {
-    const decision = await protectedAuth(req)
-    if(decision.isDenied()) {
-        if(decision.reason.isEmail()) {
-            throw new Error('Email validation failed')
+    try {
+        // Handle social sign-in specifically
+        if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
+            const body = await req.json();
+            
+            if (body.provider === 'google') {
+                const response = await authHandlers.POST(req);
+                // Check if response is empty or null
+                if (!response) {
+                    return NextResponse.json(
+                        { error: 'Empty response from auth handler' },
+                        { status: 500, headers: corsHeaders }
+                    );
+                }
+                
+                // Try to parse the response
+                try {
+                    const data = await response.json();
+                    return NextResponse.json(data, { headers: corsHeaders });
+                } catch (error) {
+                    console.error('Error parsing response:', error);
+                    return NextResponse.json(
+                        { error: 'Invalid response format' },
+                        { status: 500, headers: corsHeaders }
+                    );
+                }
+            }
         }
-        if(decision.reason.isRateLimit()) {
-            throw new Error('Rate limit exceeded')
+
+        // For other auth routes
+        const response = await authHandlers.POST(req);
+        if (!response) {
+            return NextResponse.json(
+                { error: 'Empty response from auth handler' },
+                { status: 500, headers: corsHeaders }
+            );
         }
-        if(decision.reason.isShield()) {
-            throw new Error('Shield validation failed')
+
+        try {
+            const data = await response.json();
+            return NextResponse.json(data, { headers: corsHeaders });
+        } catch (error) {
+            console.error('Error parsing response:', error);
+            return NextResponse.json(
+                { error: 'Invalid response format' },
+                { status: 500, headers: corsHeaders }
+            );
         }
+    } catch (error) {
+        console.error('Error in auth POST handler:', error);
+        return NextResponse.json(
+            { error: 'Authentication failed', details: error.message },
+            { status: 500, headers: corsHeaders }
+        );
     }
-    const response = await authHandlers.POST(req);
-    // Add CORS headers to the response
-    return NextResponse.json(await response.json(), { headers: corsHeaders });
 }
 
 export const GET = async (req: NextRequest) => {
-    const response = await authHandlers.GET(req);
-    // Add CORS headers to the response
-    return NextResponse.json(await response.json(), { headers: corsHeaders });
+    try {
+        const response = await authHandlers.GET(req);
+        if (!response) {
+            return NextResponse.json(
+                { error: 'Empty response from auth handler' },
+                { status: 500, headers: corsHeaders }
+            );
+        }
+
+        try {
+            const data = await response.json();
+            return NextResponse.json(data, { headers: corsHeaders });
+        } catch (error) {
+            console.error('Error parsing response:', error);
+            return NextResponse.json(
+                { error: 'Invalid response format' },
+                { status: 500, headers: corsHeaders }
+            );
+        }
+    } catch (error) {
+        console.error('Error in auth GET handler:', error);
+        return NextResponse.json(
+            { error: 'Authentication failed', details: error.message },
+            { status: 500, headers: corsHeaders }
+        );
+    }
 } 
