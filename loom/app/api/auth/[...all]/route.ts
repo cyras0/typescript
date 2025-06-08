@@ -63,9 +63,15 @@ const authHandlers = toNextJsHandler(auth.handler);
 
 export const POST = async (req: NextRequest) => {
     try {
-        // For social sign-in, skip the protection
         if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
             console.log('Social sign-in request received');
+            // Log the request body
+            const body = await req.clone().json();
+            console.log('Request body:', body);
+            
+            // Log the request headers
+            console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+            
             const response = await authHandlers.POST(req);
             console.log('Auth handler response:', {
                 status: response?.status,
@@ -97,6 +103,8 @@ export const POST = async (req: NextRequest) => {
         }
     } catch (error) {
         console.error('Error in auth POST handler:', error);
+        // Log the full error stack
+        console.error('Full error stack:', error.stack);
         return NextResponse.json(
             { error: 'Authentication failed', details: error.message },
             { status: 500, headers: corsHeaders }
