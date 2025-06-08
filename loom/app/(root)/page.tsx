@@ -20,7 +20,15 @@ const HomePage = async ({
   // Get mock session from cookies
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get('session');
-  const mockSession = sessionCookie ? JSON.parse(sessionCookie.value) : null;
+  let mockSession = null;
+  
+  try {
+    if (sessionCookie?.value) {
+      mockSession = JSON.parse(sessionCookie.value);
+    }
+  } catch (error) {
+    console.error('Error parsing session cookie:', error);
+  }
   
   // Await the searchParams
   const params = await searchParams;
@@ -39,8 +47,12 @@ const HomePage = async ({
       currentPage,
       perPage
     );
-    videos = result.videos;
-    pagination = result.pagination;
+    
+    // Ensure we have valid data
+    videos = Array.isArray(result?.videos) ? result.videos : [];
+    pagination = result?.pagination || { totalPages: 0, currentPage: 1 };
+    
+    console.log('Videos loaded:', videos.length);
   } catch (error) {
     console.error('Error loading videos:', error);
     // Continue with empty videos array

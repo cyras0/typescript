@@ -254,10 +254,19 @@ export const getAllVideos = async (
   limit: number = 12
 ) => {
   try {
+    console.log('=== getAllVideos START ===');
+    console.log('Params:', { searchQuery, sortFilter, page, limit });
+    
     const offset = (page - 1) * limit;
     
     // Build the base query
-    let query = buildVideoWithUserQuery();
+    let query = db
+      .select({
+        video: videos,
+        user: { id: user.id, name: user.name, image: user.image },
+      })
+      .from(videos)
+      .leftJoin(user, eq(videos.userId, user.id));
     
     // Add search condition if query exists
     if (searchQuery) {
@@ -290,14 +299,19 @@ export const getAllVideos = async (
       .from(videos)
       .where(eq(videos.visibility, 'public'));
     
-    const totalCount = Number(countResult[0].count);
+    const totalCount = Number(countResult[0]?.count || 0);
     const totalPages = Math.ceil(totalCount / limit);
     
     // Get paginated results
     const results = await query.limit(limit).offset(offset);
     
+    console.log('Query results:', results);
+    
+    // Ensure we always return an array
+    const safeResults = Array.isArray(results) ? results : [];
+    
     return {
-      videos: results,
+      videos: safeResults,
       pagination: {
         totalPages,
         currentPage: page,
@@ -305,6 +319,7 @@ export const getAllVideos = async (
     };
   } catch (error) {
     console.error('Error in getAllVideos:', error);
+    // Return empty results instead of throwing
     return {
       videos: [],
       pagination: {
