@@ -5,7 +5,7 @@ import FileInput from '@/app/components/FileInput'
 import React, { useEffect, useState } from 'react'
 import { MAX_THUMBNAIL_SIZE, MAX_VIDEO_SIZE } from '@/constants'
 import { useFileInput } from '@/lib/hooks/useFileInput'
-import { getVideoUploadUrl, saveVideoDetailsToDb, getThumbnailUploadUrl, getVideoUploadUrlWithAuth } from '@/lib/actions/video'
+import { getVideoUploadUrl, saveVideoDetails, getThumbnailUploadUrl, getVideoUploadUrlWithAuth } from '@/lib/actions/video'
 
 import {getVideoDuration} from "@/lib/utils";
 import { useRouter } from 'next/navigation';
@@ -131,7 +131,7 @@ const Page = () => {
             await upLoadFileToBunny(thumbnail.file, thumbnailUploadUrl, thumbnailAccessKey);
 
             // Create a new DB entry for the video details (urls, data)
-            await saveVideoDetailsToDb({
+            await saveVideoDetails({
                 videoId,
                 thumbnailUrl: thumbnailCdnUrl,
                 ...formData,

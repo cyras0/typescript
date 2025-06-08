@@ -1,13 +1,15 @@
 'use server'
 
-import { apiFetch, getEnv, withErrorHandling } from "@/lib/utils";
+import { apiFetch, getEnv, withErrorHandling, getOrderByClause, doesTitleMatch } from "@/lib/utils";
 import { BUNNY } from "@/constants";
 import { db } from "@/drizzle/db";
 import { user, videos } from "@/drizzle/schema";
 import { headers } from 'next/headers';
 import { auth } from "@/lib/auth";
-import { count, eq } from 'drizzle-orm';
+import { eq, and, ilike } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
+import aj, {fixedWindow, request } from "../arcjet";
+
 
 const VIDEO_STREAM_BASE_URL = `${BUNNY.STREAM_BASE_URL}/videos`;
 const BUNNY_LIBRARY_ID = getEnv("BUNNY_LIBRARY_ID");
@@ -17,21 +19,21 @@ const ACCESS_KEYS = {
 }
 
 const validateWithArcjet = async (fingerprint: string) => {
-    const rateLimit = aj.withRules({
-        fixedWindow: {
+    const rateLimit = aj.withRule(
+        fixedWindow({
             mode: 'LIVE',
             window: '1m',
             max: 2,
-            charactristcs: ['fingerprint'],
-        },
-    })
+            characteristics: ['fingerprint'],
+        })
+    );
     const req = await request()
     const decision = await rateLimit.protect(req, {fingerprint})
-    if(decision.isDenied) {
+    if(decision.isDenied()) {
         throw new Error('Rate limit exceeded')
     }
+};
 
-}
 
 const getSessionUserId = async (): Promise<string> => {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -123,40 +125,36 @@ export const getThumbnailUploadUrl = withErrorHandling(async (videoId: string) =
   };
 });
 
-export const saveVideoDetailsToDb = withErrorHandling(async (videoDetails: VideoDetails) => {
-  const userId = await getSessionUserId();
+export const saveVideoDetails = withErrorHandling(
+    async (videoDetails: VideoDetails) => {
+      const userId = await getSessionUserId();
+      await validateWithArcjet(userId);
+      await apiFetch(
+        `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
+        {
+          method: "POST",
+          bunnyType: "stream",
+          body: {
+            title: videoDetails.title,
+            description: videoDetails.description,
+          },
+        }
+      );
   
-  // First, check if user exists
-  const existingUser = await db.query.user.findFirst({
-    where: eq(user.id, userId)
-  });
+      const now = new Date();
+      await db.insert(videos).values({
+        ...videoDetails,
+        videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
+        userId,
+        createdAt: now,
+        updatedAt: now,
+      });
+  
+      revalidatePaths(["/"]);
+      return { videoId: videoDetails.videoId };
+    }
+  );
 
-  // If user doesn't exist, create them
-  if (!existingUser) {
-    await db.insert(user).values({
-      id: userId,
-      name: session.user.name || 'Anonymous',
-      email: session.user.email || `${userId}@placeholder.com`,
-      emailVerified: false,
-      image: session.user.image,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
-  }
-
-  // Now insert the video
-  await db.insert(videos).values({
-    title: videoDetails.title,
-    description: videoDetails.description,
-    videoId: videoDetails.videoId,
-    thumbnailUrl: videoDetails.thumbnailUrl,
-    visibility: videoDetails.visibility as "public" | "private",
-    videoUrl: `${BUNNY.EMBED_URL}//${BUNNY_LIBRARY_ID}/${videoDetails.videoId}`,
-    userId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-});
 
 export const getAllVideos = withErrorHandling(async (
     searchQuery: string = '',
@@ -209,3 +207,54 @@ export const getAllVideos = withErrorHandling(async (
       };
     }
   );
+
+  export const getVideoById = withErrorHandling(async (videoId: string) => {
+    const [videoRecord] = await buildVideoWithUserQuery().where(
+      eq(videos.videoId, videoId)
+    );
+    return videoRecord;
+  });
+
+  export const getAllVideosByUser = withErrorHandling(
+  async (
+    userIdParameter: string,
+    searchQuery: string = "",
+    sortFilter?: string
+  ) => {
+    const currentUserId = (
+      await auth.api.getSession({ headers: await headers() })
+    )?.user.id;
+
+    const isOwner = userIdParameter === currentUserId;
+    console.log("getAllVideosByUser", { userIdParameter, currentUserId, isOwner });
+
+    const [userInfo] = await db
+      .select({
+        id: user.id,
+        name: user.name,
+        image: user.image,
+        email: user.email,
+      })
+      .from(user)
+      .where(eq(user.id, userIdParameter));
+    if (!userInfo) throw new Error("User not found");
+
+    const conditions = [
+      eq(videos.userId, userIdParameter),
+      !isOwner && eq(videos.visibility, "public"),
+      searchQuery.trim() && ilike(videos.title, `%${searchQuery}%`),
+    ].filter(Boolean) as any[];
+
+    const userVideos = await buildVideoWithUserQuery()
+      .where(and(...conditions))
+      .orderBy(
+        sortFilter ? getOrderByClause(sortFilter) : desc(videos.createdAt)
+      );
+
+    return { 
+      user: userInfo, 
+      videos: userVideos,  // Return the full userVideos array with { video, user } structure
+      count: userVideos.length 
+    };
+  }
+);
