@@ -104,7 +104,7 @@ export async function createSession(email: string) {
       email: email,
       name: email.split('@')[0],
       emailVerified: false,
-      image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+      image: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}`,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -122,36 +122,23 @@ export async function createSession(email: string) {
     const sessionId = uuidv4();
     const sessionToken = uuidv4();
     
-    const newSession = {
-      id: sessionId,
-      userId: userId,
-      token: sessionToken,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    console.log('New session data:', newSession);
-    try {
-      await db.insert(session).values(newSession);
-      console.log('Created session:', sessionId);
-    } catch (e) {
-      console.error('Error creating session:', e);
-      throw new Error('Failed to create session');
-    }
-
     const sessionData = {
       user: {
         id: userId,
         email: email,
         name: email.split('@')[0],
-        image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+        image: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(email)}`,
       },
       session: {
         id: sessionId,
         token: sessionToken,
       }
     };
-    console.log('Session data:', sessionData);
+
+    // Ensure the session data is properly stringified
+    const sessionString = JSON.stringify(sessionData);
+    console.log('Session string:', sessionString);
+
     return sessionData;
   } catch (e) {
     console.error('Error in createSession:', e);
