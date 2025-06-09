@@ -36,9 +36,50 @@ const validateWithArcjet = async (fingerprint: string) => {
 
 
 const getSessionUserId = async (): Promise<string> => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) throw new Error("Unauthenticated");
-  return session.user.id;
+  try {
+    console.log('Getting session user ID...')
+    // Try better-auth session first
+    const session = await auth.api.getSession({ headers: await headers() });
+    console.log('Better-auth session:', session)
+    
+    if (session?.user?.id) {
+      console.log('Found better-auth session, user ID:', session.user.id)
+      return session.user.id;
+    }
+
+    // If no better-auth session, try our custom session
+    const cookieStore = await headers().get('cookie');
+    console.log('Cookie store:', cookieStore)
+    
+    if (cookieStore) {
+      const sessionCookie = cookieStore.split(';').find(c => c.trim().startsWith('session='));
+      console.log('Session cookie:', sessionCookie)
+      
+      if (sessionCookie) {
+        const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+        console.log('Parsed session data:', sessionData)
+        
+        if (sessionData?.user?.id) {
+          console.log('Found custom session, user ID:', sessionData.user.id)
+          return sessionData.user.id;
+        }
+      }
+    }
+
+    // Try headers from middleware
+    const headersList = await headers();
+    const userId = headersList.get('x-user-id');
+    if (userId) {
+      console.log('Found user ID in headers:', userId)
+      return userId;
+    }
+
+    console.log('No valid session found')
+    throw new Error("Unauthenticated");
+  } catch (error) {
+    console.error('Session error:', error);
+    throw new Error("Unauthenticated");
+  }
 };
 
 

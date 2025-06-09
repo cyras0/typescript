@@ -1,15 +1,54 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { authClient } from '@/lib/auth-client'
+import { useRouter } from 'next/navigation'
 
 const Page = () => {
-  const handleSignIn = async () => {
-    return await authClient.signIn.social({
+  const [email, setEmail] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  const handleGoogleSignIn = async () => {
+    await authClient.signIn.social({
       provider: "google",
     });
   };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/auth/sign-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+      
+      if (!response.ok) {
+        throw new Error('Sign in failed')
+      }
+
+      const data = await response.json()
+      
+      // Store session in localStorage
+      localStorage.setItem('session', JSON.stringify(data))
+      
+      // Set cookie with proper attributes
+      document.cookie = `session=${JSON.stringify(data)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`
+      
+      // Redirect to profile page instead of home
+      window.location.href = `/profile/${data.user.id}`
+    } catch (error) {
+      console.error('Sign in error:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <main className="sign-in">
       <aside className='testimonial'>
@@ -39,10 +78,33 @@ const Page = () => {
           <h1>SnapCast</h1>
          </Link>
          <p>Create and share your very first <span>SnapCast video</span> in no time!</p>
-         <button onClick={handleSignIn}>
+         
+         {/* Google Sign In Button */}
+         <button onClick={handleGoogleSignIn}>
           <Image src="/assets/icons/google.svg" alt="google" width={22} height={22} />
           <span>Sign in with Google</span>
          </button>
+
+         <div className="divider">
+           <span>or</span>
+         </div>
+
+         {/* Email Sign In Form */}
+         <form onSubmit={handleEmailSignIn} className="email-sign-in">
+           <input
+             type="email"
+             value={email}
+             onChange={(e) => setEmail(e.target.value)}
+             placeholder="Enter your email"
+             required
+           />
+           <button 
+             type="submit" 
+             disabled={isLoading}
+           >
+             {isLoading ? 'Signing in...' : 'Sign in with Email'}
+           </button>
+         </form>
         </section>
       </aside>
       <div className='overlay'/>

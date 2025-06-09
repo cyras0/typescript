@@ -1,10 +1,13 @@
 import React from 'react'
 import EmptyState from "@/app/components/EmptyState";
 import VideoCard from "@/app/components/VideoCard";
-import Header from "@/app/components/header";
+import { SharedHeader } from "@/app/components";
 import Pagination from "@/app/components/Pagination";
 import { getAllVideos } from "@/lib/actions/video";
-import { EmptyState as EmptyStateComponent, VideoCard as VideoCardComponent, Pagination as PaginationComponent } from "@/app/components";
+import { db } from "@/drizzle/db";
+import { user } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
+import { cookies } from 'next/headers';
 
 const HomePage = async ({ 
   searchParams 
@@ -17,10 +20,29 @@ const HomePage = async ({
 }) => {
   console.log('=== HomePage START ===');
   
-  // Await the searchParams
+  // Get current user from session
+  let currentUser = null;
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session');
+    if (sessionCookie?.value) {
+      const sessionData = JSON.parse(decodeURIComponent(sessionCookie.value));
+      if (sessionData?.user?.id) {
+        const [userData] = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, sessionData.user.id))
+          .limit(1);
+        currentUser = userData;
+        console.log('Found user:', currentUser);
+      }
+    }
+  } catch (e) {
+    console.error('Error getting user session:', e);
+  }
+
+  // Await searchParams before using its properties
   const params = await searchParams;
-  console.log('Search params:', params);
-  
   const currentPage = Number(params.page) || 1;
   const perPage = 12;
   
@@ -34,12 +56,18 @@ const HomePage = async ({
 
     console.log('Home page data:', {
       videosCount: videos?.length,
-      pagination
+      pagination,
+      currentUser: currentUser?.id
     });
 
     if (!videos || videos.length === 0) {
       return (
         <main className="wrapper page">
+          <SharedHeader 
+            subHeader={currentUser ? "Welcome back" : "Public Library"} 
+            title={currentUser ? currentUser.name : "All Videos"}
+            userImg={currentUser?.image}
+          />
           <EmptyState
             icon="/assets/icons/video.svg"
             title="No Videos Available Yet"
@@ -51,7 +79,11 @@ const HomePage = async ({
 
     return (
       <main className="wrapper page">
-        <Header subHeader="Public Library" title="All Videos" />
+        <SharedHeader 
+          subHeader={currentUser ? "Welcome back" : "Public Library"} 
+          title={currentUser ? currentUser.name : "All Videos"}
+          userImg={currentUser?.image}
+        />
 
         <section className="video-grid">
           {videos.map(({ video, user }) => (
@@ -87,6 +119,10 @@ const HomePage = async ({
     console.error('Home page error:', error);
     return (
       <main className="wrapper page">
+        <SharedHeader 
+          subHeader="Error" 
+          title="Something went wrong"
+        />
         <EmptyState
           icon="/assets/icons/video.svg"
           title="Error Loading Videos"

@@ -1,33 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import aj, { createMiddleware, detectBot, shield } from "./lib/arcjet";
 
 export async function middleware(request: NextRequest) {
-  const session = await auth.api.getSession({
+  console.log('Middleware called for:', request.url)
+  console.log('All cookies:', request.cookies.getAll())
+  
+  // First try better-auth session
+  const betterAuthSession = await auth.api.getSession({
     headers: await headers(),
   });
-
-  if (!session) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+  console.log('Better-auth session:', betterAuthSession)
+  
+  // If better-auth session exists, use it
+  if (betterAuthSession?.user?.id) {
+    console.log('Using better-auth session')
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
-}
-const validate = aj
-  .withRule(
-    shield({
-      mode: "LIVE",
-    })
-  )
-  .withRule(
-    detectBot({
-      mode: "LIVE",
-      allow: ["CATEGORY:SEARCH_ENGINE", "G00G1E_CRAWLER"], // allow other bots if you want to.
-    })
-  );
+  // If no better-auth session, try our custom session
+  const cookieHeader = request.headers.get('cookie')
+  console.log('Cookie header:', cookieHeader)
+  
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=')
+      acc[key] = value
+      return acc
+    }, {} as Record<string, string>)
 
-export default createMiddleware(validate);
+    console.log('Parsed cookies:', cookies)
+    const sessionCookie = cookies['session']
+    console.log('Session cookie:', sessionCookie)
+    
+    if (sessionCookie) {
+      try {
+        const session = JSON.parse(decodeURIComponent(sessionCookie))
+        console.log('Parsed session:', session)
+        if (session?.user?.id) {
+          console.log('Using custom session')
+          return NextResponse.next();
+        }
+      } catch (e) {
+        console.error('Error parsing session cookie:', e)
+      }
+    }
+  }
+
+  console.log('No valid session found, redirecting to sign-in')
+  return NextResponse.redirect(new URL("/sign-in", request.url));
+}
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico|sign-in|assets).*)"],

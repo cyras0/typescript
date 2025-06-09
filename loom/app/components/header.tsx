@@ -9,8 +9,15 @@ const Header = ({subHeader, title, userImg}: SharedHeaderProps) => {
     <header className="header">
       <section className="header-container">
         <div className="details">
-            {userImg && (
-                <Image src={userImg || '/assets/images/dummy.jpg'} alt="user" width={66} height={66} className="rounded-full"/>
+            {userImg ? (
+                <Link href={`/profile/${userImg.split('/').pop()}`}>
+                    <Image src={userImg || '/assets/images/dummy.jpg'} alt="user" width={66} height={66} className="rounded-full"/>
+                </Link>
+            ) : (
+                <Link href="/sign-in" className="sign-in-link">
+                    <Image src="/assets/icons/google.svg" alt="sign in" width={22} height={22} />
+                    <span>Sign in</span>
+                </Link>
             )}
 
             <article>
@@ -20,16 +27,25 @@ const Header = ({subHeader, title, userImg}: SharedHeaderProps) => {
         </div>
 
         <aside>
-            <Link href="/upload">
-                <Image src="/assets/icons/upload.svg" alt="upload" width={16} height={16} />
-                <span>Upload a video</span>
-            </Link>
-            <div className="record">
-                <button className="btn-primary">
-                    <Image src={ICONS.record} alt="record" width={16} height={16} />
-                    <span>Record a video</span>
-                </button>
-            </div>
+            {userImg ? (
+                <>
+                    <Link href="/upload">
+                        <Image src="/assets/icons/upload.svg" alt="upload" width={16} height={16} />
+                        <span>Upload a video</span>
+                    </Link>
+                    <div className="record">
+                        <button className="btn-primary">
+                            <Image src={ICONS.record} alt="record" width={16} height={16} />
+                            <span>Record a video</span>
+                        </button>
+                    </div>
+                </>
+            ) : (
+                <Link href="/sign-in" className="btn-primary">
+                    <Image src="/assets/icons/google.svg" alt="sign in" width={16} height={16} />
+                    <span>Sign in to upload</span>
+                </Link>
+            )}
         </aside>
       </section>
 
