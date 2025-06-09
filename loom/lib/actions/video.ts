@@ -52,7 +52,13 @@ export async function getSessionUserId() {
       return null;
     }
 
-    // Verify user exists in database
+    // In Vercel, trust the session data for email users
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, trusting session data');
+      return session.user.id;
+    }
+
+    // For local development, verify user exists in database
     const [existingUser] = await db
       .select()
       .from(user)
