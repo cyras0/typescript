@@ -10,7 +10,7 @@ import { eq, and, ilike, desc, sql, or } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
 import { cookies } from 'next/headers';
-import { getUserId } from '@/lib/session';
+import { getUserId, getSession } from '@/lib/session';
 
 
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
@@ -40,16 +40,17 @@ const validateWithArcjet = async (fingerprint: string) => {
 export async function getSessionUserId() {
   console.log('=== getSessionUserId START ===');
   try {
-    // Skip database check in Vercel
-    if (process.env.VERCEL) {
-      console.log('Running in Vercel, skipping database check');
-      const session = await getSession(undefined);
-      return session?.user?.id || null;
+    // Get the cookie from the request headers
+    const cookie = headers().get('cookie');
+    console.log('Raw cookie from headers:', cookie);
+    
+    const session = await getSession(cookie);
+    console.log('Session from getSession:', JSON.stringify(session, null, 2));
+    
+    if (!session?.user?.id) {
+      console.log('No user ID in session');
+      return null;
     }
-
-    // Original code for local development
-    const session = await getSession(undefined);
-    if (!session?.user?.id) return null;
 
     // Verify user exists in database
     const [existingUser] = await db
@@ -57,6 +58,8 @@ export async function getSessionUserId() {
       .from(user)
       .where(eq(user.id, session.user.id))
       .limit(1);
+
+    console.log('Database user lookup result:', existingUser);
 
     if (!existingUser) {
       console.log('User not found in database');
@@ -172,6 +175,14 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   const userId = await getSessionUserId();
   console.log('User ID:', userId);
   
+  if (!userId) {
+    console.error('No user ID found');
+    return {
+      success: false,
+      message: 'User not authenticated'
+    };
+  }
+  
   await validateWithArcjet(userId);
   console.log('Passed Arcjet validation');
   
@@ -198,20 +209,24 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
     createdAt: now,
     updatedAt: now,
   };
-  console.log('Database data:', dbData);
 
   try {
     await db.insert(videos).values(dbData);
-    console.log('Database save successful');
+    console.log('Database save completed');
+    revalidatePaths(['/', '/profile']);
+    return {
+      success: true,
+      message: 'Video details saved successfully'
+    };
   } catch (error) {
-    console.error('Error saving video:', error);
-    throw error;
+    console.error('Database save error:', error);
+    return {
+      success: false,
+      message: 'Failed to save video details'
+    };
+  } finally {
+    console.log('=== saveVideoDetails END ===');
   }
-
-  console.log('=== saveVideoDetails END ===');
-
-  revalidatePaths(["/"]);
-  return { videoId: videoDetails.videoId };
 };
 
 

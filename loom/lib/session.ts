@@ -10,11 +10,12 @@ const { user, session } = schema;
 
 export async function getSession(cookie: string | undefined) {
   console.log('=== getSession START ===');
+  console.log('Cookie received:', cookie);
   
   // First try better-auth session (Google)
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    console.log('Better-auth session:', session);
+    console.log('Better-auth session:', JSON.stringify(session, null, 2));
     
     if (session?.user?.id) {
       console.log('Found better-auth session, user ID:', session.user.id);
@@ -27,8 +28,27 @@ export async function getSession(cookie: string | undefined) {
   // Only if no better-auth session exists, try email bypass
   if (cookie) {
     try {
-      const session = JSON.parse(cookie);
-      if (!session?.user?.id) return null;
+      // Extract the session cookie value
+      const sessionCookie = cookie.split(';')
+        .find(c => c.trim().startsWith('session='));
+      
+      console.log('Found session cookie:', sessionCookie);
+      
+      if (!sessionCookie) {
+        console.log('No session cookie found');
+        return null;
+      }
+
+      const sessionValue = sessionCookie.split('=')[1];
+      console.log('Session value:', sessionValue);
+      
+      const session = JSON.parse(decodeURIComponent(sessionValue));
+      console.log('Parsed session:', JSON.stringify(session, null, 2));
+      
+      if (!session?.user?.id) {
+        console.log('No user ID in session');
+        return null;
+      }
 
       // Verify user exists in database
       const [existingUser] = await db
@@ -37,8 +57,14 @@ export async function getSession(cookie: string | undefined) {
         .where(eq(user.id, session.user.id))
         .limit(1);
 
-      if (!existingUser) return null;
+      console.log('Database user lookup result:', existingUser);
 
+      if (!existingUser) {
+        console.log('User not found in database');
+        return null;
+      }
+
+      console.log('Found email session, user ID:', session.user.id);
       return session;
     } catch (e) {
       console.error('Error parsing session:', e);
@@ -46,6 +72,7 @@ export async function getSession(cookie: string | undefined) {
     }
   }
 
+  console.log('No session found');
   return null;
 }
 
