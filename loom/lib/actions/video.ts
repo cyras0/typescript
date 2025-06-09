@@ -94,7 +94,7 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
-    const userId = await getUserId();
+    const userId = await getSessionUserId();
     if (!userId) {
       return "Unauthenticated";
     }
