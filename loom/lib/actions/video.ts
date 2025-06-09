@@ -427,8 +427,80 @@ export const getAllVideos = async (
 export const getVideoById = async (videoId: string) => {
   console.log('getVideoById called with:', videoId);
   
+  // In Vercel, use session info and return mock data
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, using session info');
+    const cookie = headers().get('cookie');
+    
+    if (cookie) {
+      const sessionCookie = cookie.split(';')
+        .find(c => c.trim() === 'session=' || c.trim().startsWith('session='));
+      
+      if (sessionCookie) {
+        try {
+          const sessionValue = sessionCookie.split('=')[1];
+          const session = JSON.parse(decodeURIComponent(sessionValue));
+          console.log('Found session in cookie:', session);
+          
+          if (session?.user) {
+            // Return mock video data for Vercel
+            return {
+              user: {
+                id: session.user.id,
+                name: session.user.name || session.user.email.split('@')[0],
+                email: session.user.email,
+                image: session.user.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session.user.email)}`,
+              },
+              video: {
+                id: videoId,
+                videoId: videoId,
+                title: "Sample Video",
+                description: "This is a sample video",
+                videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoId}`,
+                thumbnailUrl: "https://example.com/thumbnail.jpg",
+                visibility: "public",
+                views: 0,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                userId: session.user.id,
+                duration: 0
+              }
+            };
+          }
+        } catch (error) {
+          console.error('Error parsing session cookie:', error);
+        }
+      }
+    }
+    
+    // If no valid session found, return guest video
+    return {
+      user: {
+        id: "guest",
+        name: "Guest",
+        email: "guest@example.com",
+        image: "https://api.dicebear.com/7.x/initials/svg?seed=guest",
+      },
+      video: {
+        id: videoId,
+        videoId: videoId,
+        title: "Guest Video",
+        description: "This is a guest video",
+        videoUrl: `${BUNNY.EMBED_URL}/${BUNNY_LIBRARY_ID}/${videoId}`,
+        thumbnailUrl: "https://example.com/guest-thumbnail.jpg",
+        visibility: "public",
+        views: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "guest",
+        duration: 0
+      }
+    };
+  }
+
+  // Original code for local development
   const [video] = await buildVideoWithUserQuery()
-    .where(eq(videos.videoId, videoId));  // Make sure we're querying by videoId, not id
+    .where(eq(videos.videoId, videoId));
 
   console.log('Video query result:', {
     requestedId: videoId,
