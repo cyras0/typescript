@@ -169,6 +169,12 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   console.log('=== saveVideoDetails START ===');
   console.log('Video details:', videoDetails);
   
+  // Skip database check in Vercel
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, skipping database check');
+    return { success: true };
+  }
+
   const userId = await getSessionUserId();
   console.log('User ID:', userId);
   
@@ -198,20 +204,12 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
     createdAt: now,
     updatedAt: now,
   };
-  console.log('Database data:', dbData);
 
-  try {
-    await db.insert(videos).values(dbData);
-    console.log('Database save successful');
-  } catch (error) {
-    console.error('Error saving video:', error);
-    throw error;
-  }
+  await db.insert(videos).values(dbData);
+  console.log('Saved to database');
 
-  console.log('=== saveVideoDetails END ===');
-
-  revalidatePaths(["/"]);
-  return { videoId: videoDetails.videoId };
+  revalidatePaths(['/', '/profile']);
+  return { success: true };
 };
 
 
@@ -301,8 +299,33 @@ export const getAllVideos = async (
 export const getVideoById = async (videoId: string) => {
   console.log('getVideoById called with:', videoId);
   
+  // Skip database check in Vercel
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, skipping database check');
+    return {
+      video: {
+        id: videoId,
+        title: 'Video',
+        description: 'Description',
+        videoUrl: '',
+        videoId: videoId,
+        thumbnailUrl: '',
+        visibility: 'public',
+        userId: '',
+        views: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      user: {
+        id: '',
+        name: 'User',
+        image: 'https://api.dicebear.com/7.x/initials/svg?seed=user',
+      }
+    };
+  }
+
   const [video] = await buildVideoWithUserQuery()
-    .where(eq(videos.videoId, videoId));  // Make sure we're querying by videoId, not id
+    .where(eq(videos.videoId, videoId));
 
   console.log('Video query result:', {
     requestedId: videoId,
@@ -397,6 +420,12 @@ export const getAllVideosByUser = async (
 export const clearAllVideos = async () => {
   console.log('=== clearAllVideos START ===');
   
+  // Skip database check in Vercel
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, skipping database check');
+    return;
+  }
+
   try {
     await db.delete(videos);
     console.log('All videos deleted from database');

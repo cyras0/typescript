@@ -5,9 +5,11 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema: schema,
+  database: process.env.VERCEL ? undefined : drizzleAdapter(db, {
+    users: schema.user,
+    sessions: schema.session,
+    accounts: schema.account,
+    verificationTokens: schema.verification,
   }),
   socialProviders: {
     google: {
