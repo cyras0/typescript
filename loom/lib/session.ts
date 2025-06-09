@@ -67,12 +67,6 @@ export async function getUserId(cookie: string | undefined) {
 export async function createSession(email: string) {
   console.log('=== createSession START ===');
   try {
-    // First check if user has an active Google session
-    const googleSession = await auth.api.getSession({ headers: await headers() });
-    if (googleSession?.user?.id) {
-      throw new Error('User already has an active Google session');
-    }
-
     // Check if user exists
     const [existingUser] = await db
       .select()
