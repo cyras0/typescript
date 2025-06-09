@@ -16,6 +16,9 @@ const defaultOptions = {
 
 export class XataClient extends DatabaseClient<DatabaseSchema> {
   constructor(options?: BaseClientOptions) {
+    if (!process.env.XATA_API_KEY) {
+      throw new Error('XATA_API_KEY is not defined');
+    }
     super({ ...defaultOptions, ...options });
   }
 }
@@ -24,6 +27,10 @@ let instance: XataClient | undefined = undefined;
 
 export const getXataClient = () => {
   if (instance) return instance;
+
+  if (!process.env.XATA_API_KEY) {
+    throw new Error('XATA_API_KEY is not defined');
+  }
 
   instance = new XataClient();
   return instance;
