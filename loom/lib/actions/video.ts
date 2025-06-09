@@ -37,62 +37,41 @@ const validateWithArcjet = async (fingerprint: string) => {
 };
 
 
-const getSessionUserId = async (): Promise<string> => {
+export async function getSessionUserId() {
+  console.log('=== getSessionUserId START ===');
   try {
-    console.log('Getting session user ID...');
-    
-    // Try better-auth session first
-    const session = await auth.api.getSession({ headers: await headers() });
-    console.log('Better-auth session:', session);
-    
-    if (session?.user?.id) {
-      console.log('Found better-auth session, user ID:', session.user.id);
-      return session.user.id;
+    // Skip database check in Vercel
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping database check');
+      const session = await getSession(undefined);
+      return session?.user?.id || null;
     }
 
-    // If no better-auth session, try our custom session
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
-    console.log('Session cookie:', sessionCookie);
-    
-    if (sessionCookie?.value) {
-      try {
-        const sessionData = JSON.parse(sessionCookie.value);
-        console.log('Parsed session data:', sessionData);
-        
-        if (sessionData?.user?.id) {
-          // Verify this user exists in the database
-          const existingUsers = await db
-            .select()
-            .from(user)
-            .where(eq(user.id, sessionData.user.id))
-            .limit(1);
+    // Original code for local development
+    const session = await getSession(undefined);
+    if (!session?.user?.id) return null;
 
-          if (existingUsers.length > 0) {
-            console.log('Found custom session, user ID:', sessionData.user.id);
-            return sessionData.user.id;
-          }
-        }
-      } catch (error) {
-        console.error('Error parsing session cookie:', error);
-      }
+    // Verify user exists in database
+    const [existingUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, session.user.id))
+      .limit(1);
+
+    if (!existingUser) {
+      console.log('User not found in database');
+      return null;
     }
 
-    // Try headers from middleware
-    const headersList = await headers();
-    const userId = headersList.get('x-user-id');
-    if (userId) {
-      console.log('Found user ID in headers:', userId);
-      return userId;
-    }
-
-    console.log('No valid session found');
-    throw new Error("Unauthenticated");
+    console.log('User found in database:', existingUser.id);
+    return existingUser.id;
   } catch (error) {
-    console.error('Session error:', error);
-    throw new Error("Unauthenticated");
+    console.error('Error in getSessionUserId:', error);
+    return null;
+  } finally {
+    console.log('=== getSessionUserId END ===');
   }
-};
+}
 
 
 const revalidatePaths = (paths: string[]) => {
