@@ -78,31 +78,39 @@ export async function POST(req: NextRequest) {
             try {
                 console.log('Processing email sign-in');
                 const body = await req.json();
-                if (body.email) {
-                    console.log('Creating session for email:', body.email);
-                    // Create session for email sign-in
-                    const session = await createSession(body.email);
-                    console.log('Session created:', session);
-                    
-                    // Return response with session
-                    const cookieValue = JSON.stringify(session);
-                    console.log('Setting cookie with value:', cookieValue);
-                    
-                    const cookieOptions = [
-                        'Path=/',
-                        'HttpOnly',
-                        'SameSite=Lax',
-                        `Max-Age=${30 * 24 * 60 * 60}`,
-                        process.env.VERCEL ? 'Secure' : '',  // Add Secure in production
-                    ].filter(Boolean).join('; ');
-
-                    return NextResponse.json(session, {
-                        headers: {
-                            ...corsHeaders,
-                            'Set-Cookie': `session=${cookieValue}; ${cookieOptions}`,
-                        },
-                    });
+                if (!body.email) {
+                    return NextResponse.json(
+                        { error: 'Email is required' },
+                        { 
+                            status: 400,
+                            headers: corsHeaders
+                        }
+                    );
                 }
+                
+                console.log('Creating session for email:', body.email);
+                // Create session for email sign-in
+                const session = await createSession(body.email);
+                console.log('Session created:', session);
+                
+                // Return response with session
+                const cookieValue = JSON.stringify(session);
+                console.log('Setting cookie with value:', cookieValue);
+                
+                const cookieOptions = [
+                    'Path=/',
+                    'HttpOnly',
+                    'SameSite=Lax',
+                    `Max-Age=${30 * 24 * 60 * 60}`,
+                    process.env.VERCEL ? 'Secure' : '',  // Add Secure in production
+                ].filter(Boolean).join('; ');
+
+                return NextResponse.json(session, {
+                    headers: {
+                        ...corsHeaders,
+                        'Set-Cookie': `session=${cookieValue}; ${cookieOptions}`,
+                    },
+                });
             } catch (e) {
                 console.error('Email sign-in error:', e);
                 return NextResponse.json(
