@@ -325,6 +325,21 @@ export const getAllVideosByUser = async (
   console.log('=== getAllVideosByUser START ===');
   console.log('Input parameters:', { userIdParameter, searchQuery, sortFilter });
   
+  // Skip database check in Vercel
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, skipping database check');
+    return {
+      user: {
+        id: userIdParameter,
+        name: 'User',
+        email: 'user@example.com',
+        image: 'https://api.dicebear.com/7.x/initials/svg?seed=user',
+      },
+      videos: [],
+      count: 0
+    };
+  }
+
   const currentUserId = (
     await auth.api.getSession({ headers: await headers() })
   )?.user.id;
@@ -373,7 +388,7 @@ export const getAllVideosByUser = async (
   console.log('=== getAllVideosByUser END ===');
 
   return { 
-    user: userInfo, // Now userInfo is defined
+    user: userInfo,
     videos: userVideos,
     count: userVideos.length 
   };
