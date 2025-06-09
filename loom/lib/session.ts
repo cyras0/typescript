@@ -69,19 +69,18 @@ export async function createSession(email: string) {
   try {
     // Check if user exists
     console.log('Checking for existing user...');
-    let existingUser;
-    try {
-      const result = await db
-        .select()
-        .from(user)
-        .where(eq(user.email, email))
-        .limit(1);
-      existingUser = result[0];
-      console.log('User check result:', existingUser);
-    } catch (e) {
-      console.error('Error checking for existing user:', e);
-      throw new Error('Failed to check for existing user');
-    }
+    console.log('Database connection:', !!db);  // Check if db is defined
+    console.log('User table:', !!user);  // Check if user table is defined
+    
+    const query = db
+      .select()
+      .from(user)
+      .where(eq(user.email, email))
+      .limit(1);
+    
+    console.log('Query built:', query);
+    const [existingUser] = await query;
+    console.log('Existing user check result:', existingUser);
 
     let userId: string;
     
