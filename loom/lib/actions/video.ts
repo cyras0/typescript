@@ -267,6 +267,62 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   console.log('=== saveVideoDetails START ===');
   console.log('Video details:', JSON.stringify(videoDetails, null, 2));
   
+  // In Vercel, use session cookie directly
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, checking session cookie');
+    const cookie = headers().get('cookie');
+    
+    if (cookie) {
+      const sessionCookie = cookie.split(';')
+        .find(c => c.trim() === 'session=' || c.trim().startsWith('session='));
+      
+      if (sessionCookie) {
+        try {
+          const sessionValue = sessionCookie.split('=')[1];
+          const session = JSON.parse(decodeURIComponent(sessionValue));
+          console.log('Found session in cookie:', session);
+          
+          if (session?.user?.id) {
+            // Update video details in Bunny
+            console.log('Updating video in Bunny:', {
+              videoId: videoDetails.videoId,
+              title: videoDetails.title,
+              description: videoDetails.description
+            });
+            
+            await apiFetch(
+              `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
+              {
+                method: "POST",
+                bunnyType: "stream",
+                body: {
+                  title: videoDetails.title,
+                  description: videoDetails.description,
+                },
+              }
+            );
+            console.log('Bunny API call completed');
+
+            return {
+              success: true,
+              message: 'Video details saved successfully (Vercel mode)',
+              userId: session.user.id // Return the actual user ID
+            };
+          }
+        } catch (error) {
+          console.error('Error parsing session cookie:', error);
+        }
+      }
+    }
+    
+    console.error('No valid session found in Vercel');
+    return {
+      success: false,
+      message: 'User not authenticated'
+    };
+  }
+
+  // Original code for local development
   const userId = await getSessionUserId();
   console.log('User ID from session:', userId);
   
@@ -300,15 +356,6 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
     }
   );
   console.log('Bunny API call completed');
-
-  // Skip database save in Vercel
-  if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database save');
-    return {
-      success: true,
-      message: 'Video details saved successfully (Vercel mode)'
-    };
-  }
 
   // Save to database for local development
   const now = new Date();
