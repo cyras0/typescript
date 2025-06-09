@@ -35,7 +35,7 @@ const shieldValidation = aj.withRule(
     })
 )
 
-const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
+const protectedAuth = async (req: NextRequest, body: any): Promise<ArcjetDecision> => {
     const session = await auth.api.getSession({headers: req.headers})
     let userId: string;
     
@@ -45,7 +45,6 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
         userId = ip(req) || '127.0.0.1'
     }
     if(req.nextUrl.pathname.startsWith('/api/auth/sign-in')) {
-        const body = await req.clone().json(); 
         if(typeof body.email == 'string') {
             return emailValidation.protect(req, {
                 email: body.email,
@@ -67,8 +66,11 @@ export const { GET } = authHandlers;
 export async function POST(req: NextRequest) {
     console.log('=== auth POST START ===');
     try {
+        // Read body once at the start
+        const body = await req.json();
+        
         // Check for security validation
-        const decision = await protectedAuth(req);
+        const decision = await protectedAuth(req, body);  // Pass body to protectedAuth
         if(decision.isDenied()) {
             if(decision.reason.isEmail()) {
                 throw new Error('Email validation failed');
@@ -85,7 +87,6 @@ export async function POST(req: NextRequest) {
         if (req.nextUrl.pathname === '/api/auth/sign-in') {
             try {
                 console.log('Processing email sign-in');
-                const body = await req.clone().json();
                 if (body.email) {
                     console.log('Creating session for email:', body.email);
                     // Create session for email sign-in
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
         // Handle Google auth
         console.log('Falling back to Google auth handler');
         const response = await authHandlers.POST(req);
-        return response;  // Return directly without wrapping
+        return response;
     } catch (error) {
         console.error('Auth error:', error);
         return NextResponse.json(
