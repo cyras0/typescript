@@ -96,7 +96,10 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
     const userId = await getSessionUserId();
     if (!userId) {
-      return "Unauthenticated";
+      return {
+        error: "Unauthenticated",
+        success: false
+      };
     }
 
     const videoResponse = await apiFetch<BunnyVideoResponse>(
@@ -110,13 +113,17 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
 
     const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
     return {
+      success: true,
       videoId: videoResponse.guid,
       uploadUrl,
       AccessKey: ACCESS_KEYS.streamAccessKey,
     };
   } catch (error) {
     console.error('Error in getVideoUploadUrl:', error);
-    return "Server error occurred";
+    return {
+      error: "Server error occurred",
+      success: false
+    };
   }
 });
 
