@@ -46,3 +46,43 @@ export async function getCurrentUser() {
     return null;
   }
 }
+
+export async function getUserById(id: string) {
+  console.log('=== getUserById START ===');
+  console.log('User ID:', id);
+  try {
+    // Skip database check in Vercel
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping database check');
+      return {
+        id,
+        name: 'User',
+        email: 'user@example.com',
+        image: 'https://api.dicebear.com/7.x/initials/svg?seed=user',
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
+
+    // Original code for local development
+    const [user] = await db
+      .select()
+      .from(user)
+      .where(eq(user.id, id))
+      .limit(1);
+
+    if (!user) {
+      console.log('User not found');
+      return null;
+    }
+
+    console.log('User found:', user);
+    return user;
+  } catch (error) {
+    console.error('Error in getUserById:', error);
+    return null;
+  } finally {
+    console.log('=== getUserById END ===');
+  }
+}

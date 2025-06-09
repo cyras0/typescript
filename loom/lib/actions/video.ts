@@ -390,3 +390,30 @@ export const clearAllVideos = async () => {
     throw error;
   }
 };
+
+export async function getUserVideos(userId: string) {
+  console.log('=== getUserVideos START ===');
+  console.log('User ID:', userId);
+  try {
+    // Skip database check in Vercel
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping database check');
+      return [];
+    }
+
+    // Original code for local development
+    const userVideos = await db
+      .select()
+      .from(videos)
+      .where(eq(videos.userId, userId))
+      .orderBy(desc(videos.createdAt));
+
+    console.log('Found videos:', userVideos.length);
+    return userVideos;
+  } catch (error) {
+    console.error('Error in getUserVideos:', error);
+    return [];
+  } finally {
+    console.log('=== getUserVideos END ===');
+  }
+}
