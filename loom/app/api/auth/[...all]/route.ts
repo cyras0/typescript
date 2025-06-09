@@ -66,27 +66,18 @@ export const { GET } = authHandlers;
 export async function POST(req: NextRequest) {
     console.log('=== auth POST START ===');
     try {
-        // Read body once at the start
-        const body = await req.json();
-        
-        // Check for security validation
-        const decision = await protectedAuth(req, body);  // Pass body to protectedAuth
-        if(decision.isDenied()) {
-            if(decision.reason.isEmail()) {
-                throw new Error('Email validation failed');
-            }
-            if(decision.reason.isRateLimit()) {
-                throw new Error('Rate limit exceeded');
-            }
-            if(decision.reason.isShield()) {
-                throw new Error('Shield validation failed');
-            }
+        // Handle Google auth first (more specific path)
+        if (req.nextUrl.pathname === '/api/auth/sign-in/social') {
+            console.log('Processing Google sign-in');
+            const response = await authHandlers.POST(req);
+            return response;
         }
 
-        // Handle email sign-in
+        // Then handle email sign-in (more general path)
         if (req.nextUrl.pathname === '/api/auth/sign-in') {
             try {
                 console.log('Processing email sign-in');
+                const body = await req.json();
                 if (body.email) {
                     console.log('Creating session for email:', body.email);
                     // Create session for email sign-in
@@ -116,10 +107,14 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Handle Google auth
-        console.log('Falling back to Google auth handler');
-        const response = await authHandlers.POST(req);
-        return response;
+        // If we get here, the path wasn't recognized
+        return NextResponse.json(
+            { error: 'Invalid auth endpoint' },
+            { 
+                status: 404,
+                headers: corsHeaders
+            }
+        );
     } catch (error) {
         console.error('Auth error:', error);
         return NextResponse.json(

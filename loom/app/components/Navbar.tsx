@@ -48,16 +48,21 @@ const Navbar = () => {
             </button>
             <button
               onClick={async () => {
-                // Clear both sessions
-                localStorage.removeItem('session');
-                document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-                await authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => {
-                      router.push("/sign-in");
-                    },
-                  },
-                });
+                try {
+                  // First sign out from Google
+                  await authClient.signOut();
+                  
+                  // Then clear local session
+                  localStorage.removeItem('session');
+                  document.cookie = 'session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+                  
+                  // Force a hard refresh to clear all state
+                  window.location.href = '/sign-in';
+                } catch (error) {
+                  console.error('Error signing out:', error);
+                  // If there's an error, still try to redirect
+                  window.location.href = '/sign-in';
+                }
               }}
               className="cursor-pointer"
             >

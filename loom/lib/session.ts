@@ -68,11 +68,20 @@ export async function createSession(email: string) {
   console.log('=== createSession START ===');
   try {
     // Check if user exists
-    const [existingUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, email))
-      .limit(1);
+    console.log('Checking for existing user...');
+    let existingUser;
+    try {
+      const result = await db
+        .select()
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+      existingUser = result[0];
+      console.log('User check result:', existingUser);
+    } catch (e) {
+      console.error('Error checking for existing user:', e);
+      throw new Error('Failed to check for existing user');
+    }
 
     let userId: string;
     
@@ -80,9 +89,10 @@ export async function createSession(email: string) {
       userId = existingUser.id;
       console.log('Found existing user:', userId);
     } else {
+      console.log('Creating new user...');
       // Create new user
       userId = uuidv4();
-      await db.insert(user).values({
+      const newUser = {
         id: userId,
         email: email,
         name: email.split('@')[0],
@@ -90,23 +100,38 @@ export async function createSession(email: string) {
         image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
-      console.log('Created new user:', userId);
+      };
+      console.log('New user data:', newUser);
+      try {
+        await db.insert(user).values(newUser);
+        console.log('Created new user:', userId);
+      } catch (e) {
+        console.error('Error creating new user:', e);
+        throw new Error('Failed to create new user');
+      }
     }
 
+    console.log('Creating session...');
     // Create session
     const sessionId = uuidv4();
     const sessionToken = uuidv4();
     
-    await db.insert(session).values({
+    const newSession = {
       id: sessionId,
       userId: userId,
       token: sessionToken,
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
-    console.log('Created session:', sessionId);
+    };
+    console.log('New session data:', newSession);
+    try {
+      await db.insert(session).values(newSession);
+      console.log('Created session:', sessionId);
+    } catch (e) {
+      console.error('Error creating session:', e);
+      throw new Error('Failed to create session');
+    }
 
     const sessionData = {
       user: {
@@ -123,7 +148,10 @@ export async function createSession(email: string) {
     console.log('Session data:', sessionData);
     return sessionData;
   } catch (e) {
-    console.error('Error creating session:', e);
+    console.error('Error in createSession:', e);
+    if (e instanceof Error) {
+      console.error('Error stack:', e.stack);
+    }
     throw new Error('Failed to create session');
   } finally {
     console.log('=== createSession END ===');
