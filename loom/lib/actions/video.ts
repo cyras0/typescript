@@ -10,7 +10,7 @@ import { eq, and, ilike, desc, sql, or } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
 import { cookies } from 'next/headers';
-import { getUserId } from '@/lib/session';
+import { getSession } from '@/lib/session';
 
 
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
