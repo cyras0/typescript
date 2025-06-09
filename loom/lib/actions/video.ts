@@ -119,52 +119,76 @@ const buildVideoWithUserQuery = () =>
 
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
-  try {
-    // In Vercel, skip authentication check
-    if (process.env.VERCEL) {
-      console.log('Running in Vercel, skipping auth check');
-      const videoResponse = await apiFetch<BunnyVideoResponse>(
-        `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
-        {
-          method: 'POST',
-          bunnyType: 'stream',
-          body: { title: 'Temporary Title', collectionId: '' },
+  console.log('=== getVideoUploadUrl START ===');
+  
+  // In Vercel, use session cookie directly
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, checking session cookie');
+    const cookie = headers().get('cookie');
+    
+    if (cookie) {
+      const sessionCookie = cookie.split(';')
+        .find(c => c.trim().startsWith('session='));
+      
+      if (sessionCookie) {
+        const sessionValue = sessionCookie.split('=')[1];
+        const session = JSON.parse(decodeURIComponent(sessionValue));
+        console.log('Found session in cookie:', session);
+        
+        if (session?.user?.id) {
+          // User is authenticated, proceed with upload URL generation
+          const videoResponse = await apiFetch<BunnyVideoResponse>(
+            `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+            {
+              method: 'POST',
+              bunnyType: 'stream',
+              body: { title: 'Temporary Title', collectionId: '' },
+            }
+          );
+
+          const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+          console.log('Generated upload URL:', uploadUrl);
+          
+          return {
+            videoId: videoResponse.guid,
+            uploadUrl,
+            AccessKey: ACCESS_KEYS.streamAccessKey,
+          };
         }
-      );
-
-      const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
-      return {
-        videoId: videoResponse.guid,
-        uploadUrl,
-        AccessKey: ACCESS_KEYS.streamAccessKey,
-      };
-    }
-
-    // Local development - keep existing logic
-    const userId = await getUserId();
-    if (!userId) {
-      return "Unauthenticated";
-    }
-
-    const videoResponse = await apiFetch<BunnyVideoResponse>(
-      `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
-      {
-        method: 'POST',
-        bunnyType: 'stream',
-        body: { title: 'Temporary Title', collectionId: '' },
       }
-    );
-
-    const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
-    return {
-      videoId: videoResponse.guid,
-      uploadUrl,
-      AccessKey: ACCESS_KEYS.streamAccessKey,
-    };
-  } catch (error) {
-    console.error('Error in getVideoUploadUrl:', error);
-    return "Server error occurred";
+    }
+    
+    // If no valid session found, return error
+    console.error('No valid session found in Vercel');
+    return "Unauthenticated";
   }
+
+  // Original code for local development
+  const userId = await getSessionUserId();
+  console.log('User ID from session:', userId);
+  
+  if (!userId) {
+    console.error('No user ID found');
+    return "Unauthenticated";
+  }
+
+  const videoResponse = await apiFetch<BunnyVideoResponse>(
+    `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+    {
+      method: 'POST',
+      bunnyType: 'stream',
+      body: { title: 'Temporary Title', collectionId: '' },
+    }
+  );
+
+  const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+  console.log('Generated upload URL:', uploadUrl);
+  
+  return {
+    videoId: videoResponse.guid,
+    uploadUrl,
+    AccessKey: ACCESS_KEYS.streamAccessKey,
+  };
 });
 
 // Keep the original function for internal use
