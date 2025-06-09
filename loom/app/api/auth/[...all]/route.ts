@@ -88,10 +88,18 @@ export async function POST(req: NextRequest) {
                     const cookieValue = JSON.stringify(session);
                     console.log('Setting cookie with value:', cookieValue);
                     
+                    const cookieOptions = [
+                        'Path=/',
+                        'HttpOnly',
+                        'SameSite=Lax',
+                        `Max-Age=${30 * 24 * 60 * 60}`,
+                        process.env.VERCEL ? 'Secure' : '',  // Add Secure in production
+                    ].filter(Boolean).join('; ');
+
                     return NextResponse.json(session, {
                         headers: {
                             ...corsHeaders,
-                            'Set-Cookie': `session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`,
+                            'Set-Cookie': `session=${cookieValue}; ${cookieOptions}`,
                         },
                     });
                 }

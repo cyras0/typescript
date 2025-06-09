@@ -23,6 +23,17 @@ export async function middleware(request: NextRequest) {
     const session = JSON.parse(sessionCookie.value);
     console.log('Parsed session:', session);
     
+    // Skip database check in Vercel
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping database check');
+      if (!session?.user?.id) {
+        console.log('No valid session found, redirecting to sign-in');
+        return NextResponse.redirect(new URL('/sign-in', request.url));
+      }
+      return NextResponse.next();
+    }
+
+    // For local development, verify user exists
     if (!session?.user?.id) {
       console.log('No valid session found, redirecting to sign-in');
       return NextResponse.redirect(new URL('/sign-in', request.url));
