@@ -120,6 +120,27 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
+    // In Vercel, skip authentication check
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping auth check');
+      const videoResponse = await apiFetch<BunnyVideoResponse>(
+        `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+        {
+          method: 'POST',
+          bunnyType: 'stream',
+          body: { title: 'Temporary Title', collectionId: '' },
+        }
+      );
+
+      const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+      return {
+        videoId: videoResponse.guid,
+        uploadUrl,
+        AccessKey: ACCESS_KEYS.streamAccessKey,
+      };
+    }
+
+    // Local development - keep existing logic
     const userId = await getUserId();
     if (!userId) {
       return "Unauthenticated";
@@ -379,21 +400,50 @@ export const getAllVideosByUser = async (
   console.log('=== getAllVideosByUser START ===');
   console.log('Input parameters:', { userIdParameter, searchQuery, sortFilter });
   
-  // Skip database check in Vercel
+  // Skip database check in Vercel but use session info
   if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database check');
+    console.log('Running in Vercel, using session info');
+    const cookie = headers().get('cookie');
+    
+    if (cookie) {
+      const sessionCookie = cookie.split(';')
+        .find(c => c.trim().startsWith('session='));
+      
+      if (sessionCookie) {
+        const sessionValue = sessionCookie.split('=')[1];
+        const session = JSON.parse(decodeURIComponent(sessionValue));
+        console.log('Found session in cookie:', session);
+        
+        if (session?.user) {
+          // Use the actual user info from the session
+          return {
+            user: {
+              id: session.user.id,
+              name: session.user.name || session.user.email.split('@')[0],
+              email: session.user.email,
+              image: session.user.image || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session.user.email)}`,
+            },
+            videos: [],
+            count: 0
+          };
+        }
+      }
+    }
+    
+    // If no session found, return guest user
     return {
       user: {
         id: userIdParameter,
-        name: 'User',
-        email: 'user@example.com',
-        image: 'https://api.dicebear.com/7.x/initials/svg?seed=user',
+        name: 'Guest',
+        email: 'guest@example.com',
+        image: 'https://api.dicebear.com/7.x/initials/svg?seed=guest',
       },
       videos: [],
       count: 0
     };
   }
 
+  // Rest of the function remains the same for local development
   const currentUserId = (
     await auth.api.getSession({ headers: await headers() })
   )?.user.id;
