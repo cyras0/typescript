@@ -127,40 +127,54 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
     const cookie = headers().get('cookie');
     
     if (cookie) {
+      // Find the correct session cookie by exact name match
       const sessionCookie = cookie.split(';')
-        .find(c => c.trim().startsWith('session='));
+        .find(c => c.trim() === 'session=' || c.trim().startsWith('session='));
       
       if (sessionCookie) {
-        const sessionValue = sessionCookie.split('=')[1];
-        const session = JSON.parse(decodeURIComponent(sessionValue));
-        console.log('Found session in cookie:', session);
-        
-        if (session?.user?.id) {
-          // User is authenticated, proceed with upload URL generation
-          const videoResponse = await apiFetch<BunnyVideoResponse>(
-            `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
-            {
-              method: 'POST',
-              bunnyType: 'stream',
-              body: { title: 'Temporary Title', collectionId: '' },
-            }
-          );
-
-          const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
-          console.log('Generated upload URL:', uploadUrl);
+        try {
+          // Extract the value after 'session='
+          const sessionValue = sessionCookie.split('=')[1];
+          console.log('Raw session value:', sessionValue);
           
-          return {
-            videoId: videoResponse.guid,
-            uploadUrl,
-            AccessKey: ACCESS_KEYS.streamAccessKey,
-          };
+          const session = JSON.parse(decodeURIComponent(sessionValue));
+          console.log('Parsed session:', session);
+          
+          if (session?.user?.id) {
+            // User is authenticated, proceed with upload URL generation
+            const videoResponse = await apiFetch<BunnyVideoResponse>(
+              `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos`,
+              {
+                method: 'POST',
+                bunnyType: 'stream',
+                body: { title: 'Temporary Title', collectionId: '' },
+              }
+            );
+
+            const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
+            console.log('Generated upload URL:', uploadUrl);
+            
+            return {
+              videoId: videoResponse.guid,
+              uploadUrl,
+              AccessKey: ACCESS_KEYS.streamAccessKey,
+            };
+          } else {
+            console.error('Session found but no user ID');
+            return "Unauthenticated";
+          }
+        } catch (error) {
+          console.error('Error parsing session cookie:', error);
+          return "Invalid session";
         }
+      } else {
+        console.error('No session cookie found');
+        return "Unauthenticated";
       }
+    } else {
+      console.error('No cookies found');
+      return "Unauthenticated";
     }
-    
-    // If no valid session found, return error
-    console.error('No valid session found in Vercel');
-    return "Unauthenticated";
   }
 
   // Original code for local development
