@@ -1,8 +1,9 @@
-import { Auth } from 'better-auth';
+import { createAuthClient } from 'better-auth/react';
 import { authClient } from './auth-client';
 
 // Create auth instance with proper configuration
-export const auth = new Auth({
+export const auth = createAuthClient({
+  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   // Use a simple in-memory adapter for Vercel
   adapter: process.env.VERCEL ? {
     type: 'memory',
