@@ -3,45 +3,50 @@ import { db } from "@/drizzle/db";
 import { schema } from "@/drizzle/schema";
 import { eq } from "drizzle-orm";
 import { v4 as uuidv4 } from 'uuid';
+import { headers } from 'next/headers';
+import { auth } from "@/lib/auth";
 
 const { user, session } = schema;
 
 export async function getSession(cookie: string | undefined) {
   console.log('=== getSession START ===');
-  if (!cookie) {
-    console.log('No cookie provided');
-    return null;
-  }
-
+  
+  // First try better-auth session (Google)
   try {
-    const session = JSON.parse(cookie);
-    console.log('Parsed session:', session);
+    const session = await auth.api.getSession({ headers: await headers() });
+    console.log('Better-auth session:', session);
     
-    if (!session?.user?.id) {
-      console.log('No user ID in session');
-      return null;
+    if (session?.user?.id) {
+      console.log('Found better-auth session, user ID:', session.user.id);
+      return session;
     }
-
-    // Verify user exists in database
-    const [existingUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
-
-    if (!existingUser) {
-      console.log('User not found in database');
-      return null;
-    }
-
-    console.log('Valid session found');
-    return session;
-  } catch (e) {
-    console.error('Error parsing session:', e);
-    return null;
-  } finally {
-    console.log('=== getSession END ===');
+  } catch (error) {
+    console.log('No better-auth session found');
   }
+
+  // Only if no better-auth session exists, try email bypass
+  if (cookie) {
+    try {
+      const session = JSON.parse(cookie);
+      if (!session?.user?.id) return null;
+
+      // Verify user exists in database
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, session.user.id))
+        .limit(1);
+
+      if (!existingUser) return null;
+
+      return session;
+    } catch (e) {
+      console.error('Error parsing session:', e);
+      return null;
+    }
+  }
+
+  return null;
 }
 
 export async function getUserId(cookie: string | undefined) {
@@ -62,6 +67,12 @@ export async function getUserId(cookie: string | undefined) {
 export async function createSession(email: string) {
   console.log('=== createSession START ===');
   try {
+    // First check if user has an active Google session
+    const googleSession = await auth.api.getSession({ headers: await headers() });
+    if (googleSession?.user?.id) {
+      throw new Error('User already has an active Google session');
+    }
+
     // Check if user exists
     const [existingUser] = await db
       .select()

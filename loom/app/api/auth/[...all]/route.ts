@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         // Handle Google auth
         console.log('Falling back to Google auth handler');
         const response = await authHandlers.POST(req);
-        return NextResponse.json(response, { headers: corsHeaders });
+        return response;  // Return directly without wrapping
     } catch (error) {
         console.error('Auth error:', error);
         return NextResponse.json(

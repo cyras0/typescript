@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
 export async function middleware(request: NextRequest) {
@@ -8,7 +7,7 @@ export async function middleware(request: NextRequest) {
   
   // First try better-auth session
   const betterAuthSession = await auth.api.getSession({
-    headers: await headers(),
+    headers: request.headers,
   });
   console.log('Better-auth session:', betterAuthSession)
   

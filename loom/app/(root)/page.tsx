@@ -4,10 +4,7 @@ import VideoCard from "@/app/components/VideoCard";
 import { SharedHeader } from "@/app/components";
 import Pagination from "@/app/components/Pagination";
 import { getAllVideos } from "@/lib/actions/video";
-import { db } from "@/drizzle/db";
-import { user } from "@/drizzle/schema";
-import { eq } from "drizzle-orm";
-import { cookies } from 'next/headers';
+import { getCurrentUser } from "@/lib/actions/user";
 
 const HomePage = async ({ 
   searchParams 
@@ -20,26 +17,8 @@ const HomePage = async ({
 }) => {
   console.log('=== HomePage START ===');
   
-  // Get current user from session
-  let currentUser = null;
-  try {
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('session');
-    if (sessionCookie?.value) {
-      const sessionData = JSON.parse(decodeURIComponent(sessionCookie.value));
-      if (sessionData?.user?.id) {
-        const [userData] = await db
-          .select()
-          .from(user)
-          .where(eq(user.id, sessionData.user.id))
-          .limit(1);
-        currentUser = userData;
-        console.log('Found user:', currentUser);
-      }
-    }
-  } catch (e) {
-    console.error('Error getting user session:', e);
-  }
+  // Get current user using server action
+  const currentUser = await getCurrentUser();
 
   // Await searchParams before using its properties
   const params = await searchParams;
