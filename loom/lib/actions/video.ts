@@ -10,7 +10,7 @@ import { eq, and, ilike, desc, sql, or } from 'drizzle-orm';
 import { revalidatePath } from "next/cache";
 import aj, {fixedWindow, request } from "../arcjet";
 import { cookies } from 'next/headers';
-import { getSession } from '@/lib/session';
+import { getUserId } from '@/lib/session';
 
 
 const VIDEO_STREAM_BASE_URL = BUNNY.STREAM_BASE_URL;
@@ -94,12 +94,9 @@ const buildVideoWithUserQuery = () =>
 // Create a new server action that handles getting the headers internally
 export const getVideoUploadUrl = withErrorHandling(async () => {
   try {
-    const userId = await getSessionUserId();
+    const userId = await getUserId();
     if (!userId) {
-      return {
-        error: "Unauthenticated",
-        success: false
-      };
+      return "Unauthenticated";
     }
 
     const videoResponse = await apiFetch<BunnyVideoResponse>(
@@ -113,17 +110,13 @@ export const getVideoUploadUrl = withErrorHandling(async () => {
 
     const uploadUrl = `${BUNNY.STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoResponse.guid}`;
     return {
-      success: true,
       videoId: videoResponse.guid,
       uploadUrl,
       AccessKey: ACCESS_KEYS.streamAccessKey,
     };
   } catch (error) {
     console.error('Error in getVideoUploadUrl:', error);
-    return {
-      error: "Server error occurred",
-      success: false
-    };
+    return "Server error occurred";
   }
 });
 
@@ -176,12 +169,6 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   console.log('=== saveVideoDetails START ===');
   console.log('Video details:', videoDetails);
   
-  // Skip database check in Vercel
-  if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database check');
-    return { success: true };
-  }
-
   const userId = await getSessionUserId();
   console.log('User ID:', userId);
   
@@ -211,12 +198,20 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
     createdAt: now,
     updatedAt: now,
   };
+  console.log('Database data:', dbData);
 
-  await db.insert(videos).values(dbData);
-  console.log('Saved to database');
+  try {
+    await db.insert(videos).values(dbData);
+    console.log('Database save successful');
+  } catch (error) {
+    console.error('Error saving video:', error);
+    throw error;
+  }
 
-  revalidatePaths(['/', '/profile']);
-  return { success: true };
+  console.log('=== saveVideoDetails END ===');
+
+  revalidatePaths(["/"]);
+  return { videoId: videoDetails.videoId };
 };
 
 
@@ -306,33 +301,8 @@ export const getAllVideos = async (
 export const getVideoById = async (videoId: string) => {
   console.log('getVideoById called with:', videoId);
   
-  // Skip database check in Vercel
-  if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database check');
-    return {
-      video: {
-        id: videoId,
-        title: 'Video',
-        description: 'Description',
-        videoUrl: '',
-        videoId: videoId,
-        thumbnailUrl: '',
-        visibility: 'public',
-        userId: '',
-        views: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      user: {
-        id: '',
-        name: 'User',
-        image: 'https://api.dicebear.com/7.x/initials/svg?seed=user',
-      }
-    };
-  }
-
   const [video] = await buildVideoWithUserQuery()
-    .where(eq(videos.videoId, videoId));
+    .where(eq(videos.videoId, videoId));  // Make sure we're querying by videoId, not id
 
   console.log('Video query result:', {
     requestedId: videoId,
@@ -427,12 +397,6 @@ export const getAllVideosByUser = async (
 export const clearAllVideos = async () => {
   console.log('=== clearAllVideos START ===');
   
-  // Skip database check in Vercel
-  if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database check');
-    return;
-  }
-
   try {
     await db.delete(videos);
     console.log('All videos deleted from database');

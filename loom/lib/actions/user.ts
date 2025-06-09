@@ -86,31 +86,3 @@ export async function getUserById(id: string) {
     console.log('=== getUserById END ===');
   }
 }
-
-export async function updateUser(id: string, data: Partial<User>) {
-  console.log('=== updateUser START ===');
-  console.log('User ID:', id);
-  console.log('Update data:', data);
-
-  // Skip database check in Vercel
-  if (process.env.VERCEL) {
-    console.log('Running in Vercel, skipping database check');
-    return { success: true };
-  }
-
-  try {
-    await db
-      .update(user)
-      .set({
-        ...data,
-        updatedAt: new Date(),
-      })
-      .where(eq(user.id, id));
-
-    console.log('User updated successfully');
-    return { success: true };
-  } catch (error) {
-    console.error('Error updating user:', error);
-    throw error;
-  }
-}
