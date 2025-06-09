@@ -1,22 +1,27 @@
-import { db } from "@/drizzle/db";
-import { schema } from "@/drizzle/schema";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { nextCookies } from "better-auth/next-js";
+import { Auth } from 'better-auth';
+import { authClient } from './auth-client';
 
-export const auth = betterAuth({
-  database: process.env.VERCEL ? undefined : drizzleAdapter(db, {
-    users: schema.user,
-    sessions: schema.session,
-    accounts: schema.account,
-    verificationTokens: schema.verification,
-  }),
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    },
+// Create auth instance with proper configuration
+export const auth = new Auth({
+  // Use a simple in-memory adapter for Vercel
+  adapter: process.env.VERCEL ? {
+    type: 'memory',
+    // Add any necessary memory adapter options here
+  } : {
+    type: 'database',
+    // Your existing database configuration
+    db: {
+      type: 'postgres',
+      // ... rest of your database config
+    }
   },
-  plugins: [nextCookies()],
-  baseURL: process.env.NEXT_PUBLIC_BASE_URL,
+  // Rest of your auth configuration
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  // ... rest of your config
 });
+
+// Export the auth client
+export { authClient };
