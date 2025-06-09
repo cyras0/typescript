@@ -3,39 +3,35 @@ import aj, {
     shield,
     slidingWindow,
     validateEmail,
-  } from "@/lib/arcjet";
+} from "@/lib/arcjet";
 import ip from "@arcjet/ip";
 import { auth } from "@/lib/auth";
 import { toNextJsHandler } from "better-auth/next-js";
 import { NextRequest, NextResponse } from "next/server";
-import { db } from '@/drizzle/db';
-import { user, session as sessionTable } from '@/drizzle/schema';
-import { v4 as uuidv4 } from 'uuid';
-import { eq } from 'drizzle-orm';
-
+import { createSession } from "@/lib/session";
 
 // Add CORS headers helper
 const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_BASE_URL || '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_BASE_URL || '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
 };
 
 // Handle OPTIONS request for CORS preflight
 export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
+    return NextResponse.json({}, { headers: corsHeaders });
 }
 
 const emailValidation = aj.withRule(
     validateEmail({mode: 'LIVE', block: ['DISPOSABLE', 'INVALID', 'NO_MX_RECORDS']}))
 
 const rateLimit = aj.withRule(
-    slidingWindow({mode: 'LIVE', interval: '2m', max: 2, characteristics: ['fingerprint']}))
+    slidingWindow({mode: 'LIVE', interval: '2m', max: 100, characteristics: ['fingerprint']}))
 
 const shieldValidation = aj.withRule(
     shield({
-        mode: 'LIVE',
+        mode: 'DRY_RUN',
     })
 )
 
@@ -44,7 +40,7 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
     let userId: string;
     
     if(session?.user?.id) {
-       userId = session.user.id;
+        userId = session.user.id;
     } else {
         userId = ip(req) || '127.0.0.1'
     }
@@ -58,10 +54,10 @@ const protectedAuth = async (req: NextRequest): Promise<ArcjetDecision> => {
     }
     if (!req.nextUrl.pathname.startsWith("/api/auth/sign-out")) {
         return rateLimit.protect(req, {
-          fingerprint: userId,
+            fingerprint: userId,
         });
-      }
-      return shieldValidation.protect(req);
+    }
+    return shieldValidation.protect(req);
 }
 
 const authHandlers = toNextJsHandler(auth.handler);
@@ -69,116 +65,69 @@ const authHandlers = toNextJsHandler(auth.handler);
 export const { GET } = authHandlers;
 
 export async function POST(req: NextRequest) {
+    console.log('=== auth POST START ===');
     try {
-        console.log('=== auth POST START ===');
-        // Try the normal auth flow first
-        const response = await authHandlers.POST(req);
-        return response;
-    } catch (error) {
-        console.log('Auth flow failed, checking for email sign-in');
-        // If it fails, check if it's an email sign-in request
-        const body = await req.clone().json();
-        if (body.email) {
+        // Check for security validation
+        const decision = await protectedAuth(req);
+        if(decision.isDenied()) {
+            if(decision.reason.isEmail()) {
+                throw new Error('Email validation failed');
+            }
+            if(decision.reason.isRateLimit()) {
+                throw new Error('Rate limit exceeded');
+            }
+            if(decision.reason.isShield()) {
+                throw new Error('Shield validation failed');
+            }
+        }
+
+        // Handle email sign-in
+        if (req.nextUrl.pathname === '/api/auth/sign-in') {
             try {
-                console.log('Processing email sign-in for:', body.email);
-                
-                // First check if user already exists
-                const existingUsers = await db
-                    .select()
-                    .from(user)
-                    .where(eq(user.email, body.email))
-                    .limit(1);
-
-                let finalUserId;
-                if (existingUsers.length > 0) {
-                    finalUserId = existingUsers[0].id;
-                    console.log('Found existing user:', finalUserId);
-                } else {
-                    // Create new user
-                    finalUserId = uuidv4();
-                    const now = new Date();
-                    await db.insert(user).values({
-                        id: finalUserId,
-                        name: body.email.split('@')[0],
-                        email: body.email,
-                        image: `https://www.gravatar.com/avatar/${body.email}?d=mp&f=y`,
-                        emailVerified: true,
-                        createdAt: now,
-                        updatedAt: now,
+                console.log('Processing email sign-in');
+                const body = await req.clone().json();
+                if (body.email) {
+                    console.log('Creating session for email:', body.email);
+                    // Create session for email sign-in
+                    const session = await createSession(body.email);
+                    console.log('Session created:', session);
+                    
+                    // Return response with session
+                    const cookieValue = JSON.stringify(session);
+                    console.log('Setting cookie with value:', cookieValue);
+                    
+                    return NextResponse.json(session, {
+                        headers: {
+                            ...corsHeaders,
+                            'Set-Cookie': `session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`,
+                        },
                     });
-                    console.log('Created new user:', finalUserId);
                 }
-
-                // Create a session
-                const sessionId = uuidv4();
-                const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-                const now = new Date();
-                const token = uuidv4();
-                
-                await db.insert(sessionTable).values({
-                    id: sessionId,
-                    userId: finalUserId,
-                    expiresAt: expiresAt,
-                    token: token,
-                    createdAt: now,
-                    updatedAt: now,
-                });
-                console.log('Created session:', sessionId);
-
-                // Get the user details
-                const [userDetails] = await db
-                    .select()
-                    .from(user)
-                    .where(eq(user.id, finalUserId))
-                    .limit(1);
-
-                if (!userDetails) {
-                    throw new Error('User details not found after creation');
-                }
-
-                // Create a simpler session format
-                const session = {
-                    user: {
-                        id: userDetails.id,
-                        name: userDetails.name,
-                        email: userDetails.email,
-                        image: userDetails.image
-                    },
-                    session: {
-                        id: sessionId,
-                        expiresAt: expiresAt.toISOString(),
-                        token: token
-                    }
-                };
-
-                console.log('Created session object:', session);
-
-                // Set the session cookie with proper encoding
-                const sessionCookie = `session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=${24 * 60 * 60}; SameSite=Lax`;
-                
-                const response = NextResponse.json({ 
-                    user: userDetails,
-                    session: session
-                }, { 
-                    headers: {
-                        ...corsHeaders,
-                        'Set-Cookie': sessionCookie
-                    }
-                });
-
-                console.log('Sending response with cookie');
-                return response;
-            } catch (error) {
-                console.error('Error in email sign-in:', error);
+            } catch (e) {
+                console.error('Email sign-in error:', e);
                 return NextResponse.json(
-                    { error: 'Failed to create user' },
-                    { status: 500 }
+                    { error: 'Sign in failed' },
+                    { 
+                        status: 500,
+                        headers: corsHeaders
+                    }
                 );
             }
         }
-        
-        // If it's not an email sign-in, return the original error
-        throw error;
+
+        // Handle Google auth
+        console.log('Falling back to Google auth handler');
+        const response = await authHandlers.POST(req);
+        return NextResponse.json(response, { headers: corsHeaders });
+    } catch (error) {
+        console.error('Auth error:', error);
+        return NextResponse.json(
+            { error: 'Authentication failed' },
+            { 
+                status: 500,
+                headers: corsHeaders
+            }
+        );
     } finally {
         console.log('=== auth POST END ===');
     }

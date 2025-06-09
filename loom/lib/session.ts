@@ -1,80 +1,126 @@
-import { cookies } from 'next/headers';
-import { db } from '@/drizzle/db';
-import { user } from '@/drizzle/schema';
-import { eq } from 'drizzle-orm';
+// lib/session.ts
+import { db } from "@/drizzle/db";
+import { schema } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
+import { v4 as uuidv4 } from 'uuid';
 
-export async function getSession() {
+const { user, session } = schema;
+
+export async function getSession(cookie: string | undefined) {
   console.log('=== getSession START ===');
-  try {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('session');
-    
-    console.log('Session cookie:', sessionCookie);
-    
-    if (!sessionCookie?.value) {
-      console.log('No session cookie found');
-      return null;
-    }
+  if (!cookie) {
+    console.log('No cookie provided');
+    return null;
+  }
 
-    const session = JSON.parse(sessionCookie.value);
+  try {
+    const session = JSON.parse(cookie);
     console.log('Parsed session:', session);
     
-    // Check if we have a valid session structure
-    if (!session || typeof session !== 'object') {
-      console.log('Invalid session structure');
-      return null;
-    }
-
-    // Check if we have a user object
-    if (!session.user || typeof session.user !== 'object') {
-      console.log('No user object in session');
-      return null;
-    }
-
-    // Check if we have a user ID
-    if (!session.user.id || typeof session.user.id !== 'string') {
+    if (!session?.user?.id) {
       console.log('No user ID in session');
       return null;
     }
 
     // Verify user exists in database
-    const existingUsers = await db
+    const [existingUser] = await db
       .select()
       .from(user)
       .where(eq(user.id, session.user.id))
       .limit(1);
 
-    console.log('Existing users:', existingUsers);
-
-    if (!existingUsers || existingUsers.length === 0) {
+    if (!existingUser) {
       console.log('User not found in database');
       return null;
     }
 
     console.log('Valid session found');
     return session;
-  } catch (error) {
-    console.error('Error in getSession:', error);
+  } catch (e) {
+    console.error('Error parsing session:', e);
     return null;
   } finally {
     console.log('=== getSession END ===');
   }
 }
 
-export async function getUserId(): Promise<string | null> {
+export async function getUserId(cookie: string | undefined) {
   console.log('=== getUserId START ===');
   try {
-    const session = await getSession();
-    if (!session?.user?.id) {
-      console.log('No user ID found in session');
-      return null;
-    }
-    console.log('User ID found:', session.user.id);
-    return session.user.id;
+    const session = await getSession(cookie);
+    const userId = session?.user?.id || null;
+    console.log('User ID found:', userId);
+    return userId;
   } catch (error) {
     console.error('Error in getUserId:', error);
     return null;
   } finally {
     console.log('=== getUserId END ===');
   }
-} 
+}
+
+export async function createSession(email: string) {
+  console.log('=== createSession START ===');
+  try {
+    // Check if user exists
+    const [existingUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, email))
+      .limit(1);
+
+    let userId: string;
+    
+    if (existingUser) {
+      userId = existingUser.id;
+      console.log('Found existing user:', userId);
+    } else {
+      // Create new user
+      userId = uuidv4();
+      await db.insert(user).values({
+        id: userId,
+        email: email,
+        name: email.split('@')[0],
+        emailVerified: false,
+        image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      console.log('Created new user:', userId);
+    }
+
+    // Create session
+    const sessionId = uuidv4();
+    const sessionToken = uuidv4();
+    
+    await db.insert(session).values({
+      id: sessionId,
+      userId: userId,
+      token: sessionToken,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    console.log('Created session:', sessionId);
+
+    const sessionData = {
+      user: {
+        id: userId,
+        email: email,
+        name: email.split('@')[0],
+        image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+      },
+      session: {
+        id: sessionId,
+        token: sessionToken,
+      }
+    };
+    console.log('Session data:', sessionData);
+    return sessionData;
+  } catch (e) {
+    console.error('Error creating session:', e);
+    throw new Error('Failed to create session');
+  } finally {
+    console.log('=== createSession END ===');
+  }
+}

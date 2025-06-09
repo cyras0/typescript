@@ -1,9 +1,12 @@
 import React from 'react'
 import EmptyState from "@/app/components/EmptyState";
 import VideoCard from "@/app/components/VideoCard";
-import Header from "@/app/components/header";
+import { SharedHeader } from "@/app/components";
 import Pagination from "@/app/components/Pagination";
 import { getAllVideos } from "@/lib/actions/video";
+import { db } from "@/drizzle/db";
+import { user } from "@/drizzle/schema";
+import { eq } from "drizzle-orm";
 import { cookies } from 'next/headers';
 
 const HomePage = async ({ 
@@ -17,95 +20,117 @@ const HomePage = async ({
 }) => {
   console.log('=== HomePage START ===');
   
-  // Get mock session from cookies
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('session');
-  let mockSession = null;
-  
+  // Get current user from session
+  let currentUser = null;
   try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session');
     if (sessionCookie?.value) {
-      mockSession = JSON.parse(sessionCookie.value);
+      const sessionData = JSON.parse(decodeURIComponent(sessionCookie.value));
+      if (sessionData?.user?.id) {
+        const [userData] = await db
+          .select()
+          .from(user)
+          .where(eq(user.id, sessionData.user.id))
+          .limit(1);
+        currentUser = userData;
+        console.log('Found user:', currentUser);
+      }
     }
-  } catch (error) {
-    console.error('Error parsing session cookie:', error);
+  } catch (e) {
+    console.error('Error getting user session:', e);
   }
-  
-  // Await the searchParams
+
+  // Await searchParams before using its properties
   const params = await searchParams;
-  console.log('Search params:', params);
-  
   const currentPage = Number(params.page) || 1;
   const perPage = 12;
   
-  let videos = [];
-  let pagination = { totalPages: 0, currentPage: 1 };
-  
   try {
-    const result = await getAllVideos(
+    const { videos, pagination } = await getAllVideos(
       params.query, 
       params.filter,
       currentPage,
       perPage
     );
-    
-    // Ensure we have valid data
-    videos = Array.isArray(result?.videos) ? result.videos : [];
-    pagination = result?.pagination || { totalPages: 0, currentPage: 1 };
-    
-    console.log('Videos loaded:', videos.length);
-  } catch (error) {
-    console.error('Error loading videos:', error);
-    // Continue with empty videos array
-  }
 
-  return (
-    <main className="wrapper page">
-      <Header 
-        subHeader="Welcome" 
-        title={mockSession?.user?.name || "Guest"} 
-        userImg={mockSession?.user?.image}
-      />
-      
-      {videos.length === 0 ? (
+    console.log('Home page data:', {
+      videosCount: videos?.length,
+      pagination,
+      currentUser: currentUser?.id
+    });
+
+    if (!videos || videos.length === 0) {
+      return (
+        <main className="wrapper page">
+          <SharedHeader 
+            subHeader={currentUser ? "Welcome back" : "Public Library"} 
+            title={currentUser ? currentUser.name : "All Videos"}
+            userImg={currentUser?.image}
+          />
+          <EmptyState
+            icon="/assets/icons/video.svg"
+            title="No Videos Available Yet"
+            description="Video will show up here once you upload them."
+          />
+        </main>
+      );
+    }
+
+    return (
+      <main className="wrapper page">
+        <SharedHeader 
+          subHeader={currentUser ? "Welcome back" : "Public Library"} 
+          title={currentUser ? currentUser.name : "All Videos"}
+          userImg={currentUser?.image}
+        />
+
+        <section className="video-grid">
+          {videos.map(({ video, user }) => (
+            <VideoCard
+              key={video.id}
+              id={video.videoId}
+              title={video.title}
+              thumbnail={video.thumbnailUrl}
+              createdAt={video.createdAt}
+              userImg={user?.image ?? ""}
+              username={user?.name ?? "Guest"}
+              views={video.views}
+              visibility={video.visibility}
+              duration={video.duration}
+            />
+          ))}
+        </section>
+        
+        {pagination.totalPages > 1 && (
+          <Pagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            baseUrl="/"
+            queryParams={{
+              ...(params.query && { query: params.query }),
+              ...(params.filter && { filter: params.filter })
+            }}
+          />
+        )}
+      </main>
+    );
+  } catch (error) {
+    console.error('Home page error:', error);
+    return (
+      <main className="wrapper page">
+        <SharedHeader 
+          subHeader="Error" 
+          title="Something went wrong"
+        />
         <EmptyState
           icon="/assets/icons/video.svg"
-          title="No Videos Available Yet"
-          description="Video will show up here once you upload them."
+          title="Error Loading Videos"
+          description="There was an error loading the videos. Please try again later."
         />
-      ) : (
-        <>
-          <section className="video-grid">
-            {videos.map(({ video, user }) => (
-              <VideoCard
-                key={video.id}
-                id={video.videoId}
-                title={video.title}
-                thumbnail={video.thumbnailUrl}
-                createdAt={video.createdAt}
-                userImg={user?.image ?? ""}
-                username={user?.name ?? "Guest"}
-                views={video.views}
-                visibility={video.visibility}
-                duration={video.duration}
-              />
-            ))}
-          </section>
-          
-          {pagination.totalPages > 1 && (
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPages={pagination.totalPages}
-              baseUrl="/"
-              queryParams={{
-                ...(params.query && { query: params.query }),
-                ...(params.filter && { filter: params.filter })
-              }}
-            />
-          )}
-        </>
-      )}
-    </main>
-  );
+      </main>
+    );
+  }
 };
 
 export default HomePage;

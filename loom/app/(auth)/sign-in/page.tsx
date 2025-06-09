@@ -8,6 +8,7 @@ import { authClient } from '@/lib/auth-client'
 const Page = () => {
   const [email, setEmail] = useState('')
   const [showEmailInput, setShowEmailInput] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
   const handleGoogleSignIn = async () => {
@@ -26,36 +27,39 @@ const Page = () => {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
     try {
-        console.log('=== handleEmailSignIn START ===');
-        console.log('Starting email sign in with:', email);
-        
-        const response = await fetch('/api/auth/sign-in', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-            credentials: 'include' // Important for cookies
-        });
+      console.log('=== handleEmailSignIn START ===');
+      console.log('Starting email sign in with:', email);
+      
+      const response = await fetch('/api/auth/sign-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Sign in failed');
+      }
 
-        if (!response.ok) {
-            throw new Error('Failed to sign in');
-        }
-
-        const data = await response.json();
-        console.log('Sign in response:', data);
-        
-        // Store session in localStorage
-        localStorage.setItem('mockSession', JSON.stringify(data));
-        console.log('Session stored in localStorage:', data);
-        
-        // Navigate to home page
-        window.location.href = '/';
+      const data = await response.json();
+      console.log('Sign in response:', data);
+      
+      // Store session in localStorage
+      localStorage.setItem('session', JSON.stringify(data));
+      
+      // Set cookie with proper attributes
+      document.cookie = `session=${JSON.stringify(data)}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+      
+      // Redirect to profile page
+      window.location.href = `/profile/${data.user.id}`;
     } catch (error) {
-        console.error('Email sign in error:', error)
+      console.error('Sign in error:', error);
     } finally {
-        console.log('=== handleEmailSignIn END ===');
+      setIsLoading(false);
+      console.log('=== handleEmailSignIn END ===');
     }
   }
 
@@ -114,18 +118,21 @@ const Page = () => {
                 placeholder="Enter your email"
                 className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                disabled={isLoading}
               />
               <div className="flex gap-2">
                 <button 
                   type="submit"
                   className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-50 transition-colors"
+                  disabled={isLoading}
                 >
-                  <span>Continue</span>
+                  <span>{isLoading ? 'Signing in...' : 'Continue'}</span>
                 </button>
                 <button 
                   type="button"
                   onClick={() => setShowEmailInput(false)}
                   className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-lg border hover:bg-gray-200 transition-colors"
+                  disabled={isLoading}
                 >
                   <span>Back</span>
                 </button>
