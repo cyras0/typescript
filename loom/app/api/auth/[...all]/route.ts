@@ -88,10 +88,15 @@ export async function POST(req: NextRequest) {
                     const cookieValue = JSON.stringify(session);
                     console.log('Setting cookie with value:', cookieValue);
                     
+                    // In Vercel, we need to ensure the cookie is set with the correct domain
+                    const cookieOptions = process.env.VERCEL 
+                        ? `session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}; Domain=${process.env.NEXT_PUBLIC_BASE_URL?.replace('https://', '')}`
+                        : `session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`;
+                    
                     return NextResponse.json(session, {
                         headers: {
                             ...corsHeaders,
-                            'Set-Cookie': `session=${cookieValue}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${30 * 24 * 60 * 60}`,
+                            'Set-Cookie': cookieOptions,
                         },
                     });
                 }

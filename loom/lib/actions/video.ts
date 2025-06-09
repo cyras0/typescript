@@ -44,6 +44,27 @@ export async function getSessionUserId() {
     const cookie = headers().get('cookie');
     console.log('Raw cookie from headers:', cookie);
     
+    // In Vercel, try to get the session directly from the cookie
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, checking session cookie directly');
+      if (cookie) {
+        const sessionCookie = cookie.split(';')
+          .find(c => c.trim().startsWith('session='));
+        
+        if (sessionCookie) {
+          const sessionValue = sessionCookie.split('=')[1];
+          const session = JSON.parse(decodeURIComponent(sessionValue));
+          console.log('Found session in cookie:', session);
+          
+          if (session?.user?.id) {
+            console.log('Using user ID from cookie:', session.user.id);
+            return session.user.id;
+          }
+        }
+      }
+    }
+    
+    // For local development or if Vercel cookie check failed
     const session = await getSession(cookie);
     console.log('Session from getSession:', JSON.stringify(session, null, 2));
     
@@ -52,28 +73,24 @@ export async function getSessionUserId() {
       return null;
     }
 
-    // In Vercel, trust the session data for email users
-    if (process.env.VERCEL) {
-      console.log('Running in Vercel, trusting session data');
-      return session.user.id;
-    }
-
     // For local development, verify user exists in database
-    const [existingUser] = await db
-      .select()
-      .from(user)
-      .where(eq(user.id, session.user.id))
-      .limit(1);
+    if (!process.env.VERCEL) {
+      const [existingUser] = await db
+        .select()
+        .from(user)
+        .where(eq(user.id, session.user.id))
+        .limit(1);
 
-    console.log('Database user lookup result:', existingUser);
+      console.log('Database user lookup result:', existingUser);
 
-    if (!existingUser) {
-      console.log('User not found in database');
-      return null;
+      if (!existingUser) {
+        console.log('User not found in database');
+        return null;
+      }
     }
 
-    console.log('User found in database:', existingUser.id);
-    return existingUser.id;
+    console.log('User ID found:', session.user.id);
+    return session.user.id;
   } catch (error) {
     console.error('Error in getSessionUserId:', error);
     return null;
