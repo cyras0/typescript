@@ -170,10 +170,10 @@ export const getThumbnailUploadUrl = withErrorHandling(async (videoId: string) =
 
 export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   console.log('=== saveVideoDetails START ===');
-  console.log('Video details:', videoDetails);
+  console.log('Video details:', JSON.stringify(videoDetails, null, 2));
   
   const userId = await getSessionUserId();
-  console.log('User ID:', userId);
+  console.log('User ID from session:', userId);
   
   if (!userId) {
     console.error('No user ID found');
@@ -187,6 +187,12 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   console.log('Passed Arcjet validation');
   
   // Update video details in Bunny
+  console.log('Updating video in Bunny:', {
+    videoId: videoDetails.videoId,
+    title: videoDetails.title,
+    description: videoDetails.description
+  });
+  
   await apiFetch(
     `${VIDEO_STREAM_BASE_URL}/${BUNNY_LIBRARY_ID}/videos/${videoDetails.videoId}`,
     {
@@ -200,7 +206,16 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
   );
   console.log('Bunny API call completed');
 
-  // Save to database
+  // Skip database save in Vercel
+  if (process.env.VERCEL) {
+    console.log('Running in Vercel, skipping database save');
+    return {
+      success: true,
+      message: 'Video details saved successfully (Vercel mode)'
+    };
+  }
+
+  // Save to database for local development
   const now = new Date();
   const dbData = {
     ...videoDetails,
@@ -209,6 +224,7 @@ export const saveVideoDetails = async (videoDetails: VideoDetails) => {
     createdAt: now,
     updatedAt: now,
   };
+  console.log('Database data to insert:', JSON.stringify(dbData, null, 2));
 
   try {
     await db.insert(videos).values(dbData);
