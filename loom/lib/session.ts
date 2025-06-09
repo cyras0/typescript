@@ -67,47 +67,54 @@ export async function getUserId(cookie: string | undefined) {
 export async function createSession(email: string) {
   console.log('=== createSession START ===');
   try {
-    // Check if user exists
-    console.log('Checking for existing user...');
-    console.log('Database connection:', !!db);  // Check if db is defined
-    console.log('User table:', !!user);  // Check if user table is defined
-    
-    const query = db
-      .select()
-      .from(user)
-      .where(eq(user.email, email))
-      .limit(1);
-    
-    console.log('Query built:', query);
-    const [existingUser] = await query;
-    console.log('Existing user check result:', existingUser);
-
     let userId: string;
     
-    if (existingUser) {
-      userId = existingUser.id;
-      console.log('Found existing user:', userId);
-    } else {
-      console.log('Creating new user...');
-      // Create new user
+    // Skip user existence check in Vercel
+    if (process.env.VERCEL) {
+      console.log('Running in Vercel, skipping user existence check');
       userId = uuidv4();
-      const newUser = {
-        id: userId,
-        email: email,
-        name: email.split('@')[0],
-        emailVerified: false,
-        image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      console.log('New user data:', newUser);
-      try {
-        await db.insert(user).values(newUser);
-        console.log('Created new user:', userId);
-      } catch (e) {
-        console.error('Error creating new user:', e);
-        throw new Error('Failed to create new user');
+    } else {
+      // Check if user exists
+      console.log('Checking for existing user...');
+      console.log('Database connection:', !!db);
+      console.log('User table:', !!user);
+      
+      const query = db
+        .select()
+        .from(user)
+        .where(eq(user.email, email))
+        .limit(1);
+      
+      console.log('Query built:', query);
+      const [existingUser] = await query;
+      console.log('Existing user check result:', existingUser);
+
+      if (existingUser) {
+        userId = existingUser.id;
+        console.log('Found existing user:', userId);
+      } else {
+        userId = uuidv4();
       }
+    }
+
+    console.log('Creating new user...');
+    // Create new user
+    const newUser = {
+      id: userId,
+      email: email,
+      name: email.split('@')[0],
+      emailVerified: false,
+      image: `https://api.dicebear.com/7.x/initials/svg?seed=${email}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    console.log('New user data:', newUser);
+    try {
+      await db.insert(user).values(newUser);
+      console.log('Created new user:', userId);
+    } catch (e) {
+      console.error('Error creating new user:', e);
+      throw new Error('Failed to create new user');
     }
 
     console.log('Creating session...');
